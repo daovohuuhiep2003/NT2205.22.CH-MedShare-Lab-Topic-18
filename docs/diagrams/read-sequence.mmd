@@ -1,0 +1,30 @@
+sequenceDiagram
+  actor User
+  participant G as Trusted Gateway PEP
+  participant P as PDP
+  participant V as Trusted Registry
+  participant D as Cloud DB
+  participant B as Broker PEP
+  participant K as KMS
+  participant L as Audit
+  User->>G: F1 authenticated read request
+  G->>V: Resolve authoritative tenant/object/current version
+  V-->>G: Expected context + current manifest
+  G->>P: F2 verified attributes + requested fields + action
+  P-->>G: Permit or deny + policy version
+  alt Denied or dependency unavailable
+    G->>L: Deny/error metadata
+    G-->>User: Safe rejection, no keys or plaintext
+  else Permitted
+    G->>D: F4 fetch encrypted fields
+    D-->>G: Envelope + capsule
+    G->>B: Bound decrypt request and expected context
+    B->>P: Independent authorization + revocation check
+    B->>V: Verify current capsule/version/hash
+    B->>K: Unwrap with validated context
+    K-->>B: Scoped DEK
+    B-->>G: DEK over authenticated confidential channel
+    G->>G: Check versions; AEAD verify before plaintext release
+    G->>L: F9 decision/key-use/result metadata
+    G-->>User: Authorized fields only
+  end

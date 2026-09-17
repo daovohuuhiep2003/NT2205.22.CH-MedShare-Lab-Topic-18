@@ -1,0 +1,13 @@
+stateDiagram-v2
+  [*] --> Planned
+  Planned --> Prepared: Create new key and signed migration plan
+  Prepared --> DualRead: Enable explicitly allowed old/new readers
+  DualRead --> Rewrapping: New writes use new version
+  Rewrapping --> Verifying: Idempotent per-capsule CAS updates
+  Rewrapping --> Paused: Fault or dependency outage
+  Paused --> Rewrapping: Resume from trusted journal
+  Verifying --> Cutover: Counts and decrypt checks match
+  Verifying --> Paused: Verification fails
+  Cutover --> Retired: Reject retired versions in online path
+  Retired --> DestroyEligible: Backup retention and recovery checks complete
+  DestroyEligible --> [*]: Destroy allowed copies and record limits

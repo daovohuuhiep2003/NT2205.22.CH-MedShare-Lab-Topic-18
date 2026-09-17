@@ -1,0 +1,28 @@
+flowchart TD
+  OWNER["Trusted owner / recipient"]
+  ID["Trusted identity + attribute authority"]
+  PEP["Trusted gateway + broker PEP"]
+  PDP["Trusted PDP"]
+  KEYS["Trusted KMS and key clients"]
+  REG["Independent current-state registry"]
+  DB["Untrusted SQL / NoSQL store"]
+  BACK["Untrusted backup / CDC"]
+  HE["Untrusted BFV compute worker"]
+  AUD["Independent audit + checkpoint"]
+  ID -->|"F0 provision attribute keys / public descriptors"| OWNER
+  KEYS -->|"F0 provision/release scoped key"| PEP
+  OWNER -->|"F1 authenticated request"| PEP
+  ID -->|"F1 verified identity / workflow claims"| PEP
+  PEP -->|"F2 subject/object/action/environment"| PDP
+  PDP -->|"Permit or deny + policy version"| PEP
+  PEP -->|"F3 AEAD ciphertext + bound context"| DB
+  PEP -->|"F4 point ID / equality token"| DB
+  PEP -->|"F5 range/text: unsupported in core"| OWNER
+  OWNER -->|"F6 authorized cohort + BFV ciphertext"| HE
+  HE -->|"F6 encrypted aggregate"| OWNER
+  DB -->|"F7 snapshot / replication / CDC"| BACK
+  KEYS -->|"F8 version and migration state"| REG
+  REG -->|"F8 freshness checks before accept"| PEP
+  PEP -->|"F9 decisions and operation IDs"| AUD
+  PDP -->|"F9 decision log"| AUD
+  KEYS -->|"F9 use and lifecycle log"| AUD

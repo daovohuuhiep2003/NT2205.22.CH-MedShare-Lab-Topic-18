@@ -1,0 +1,15 @@
+flowchart LR
+  subgraph P2["P2 - CP-ABE share"]
+    O2["Trusted owner / AA - independent share DEK and epoch"] --> C2["Cloud - encrypted export / CP-ABE capsule / signed manifest"]
+    C2 --> R2["Recipient SDK - verify then decrypt"]
+    O2 -->|"Authenticated attribute key provisioning"| R2
+  end
+  subgraph P3["P3 - BFV aggregate"]
+    O3["Trusted owner - approved cohort and HE secret key"] -->|"Ciphertext and public evaluation keys"| C3["Cloud BFV worker - encrypted SUM/count"]
+    C3 -->|"Encrypted result - not proven correct"| O3
+    O3 -->|"Authorized scalar only"| R3["Analyst"]
+  end
+  subgraph P4["P4 - independent PQ archive"]
+    O4["Trusted archiver - independent archive DEK / ML-KEM / ML-DSA"] --> C4["Cloud - archive / PQ capsule / signed manifest"]
+    C4 --> R4["Recipient or owner - verify version / decap / decrypt"]
+  end

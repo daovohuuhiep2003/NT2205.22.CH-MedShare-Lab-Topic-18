@@ -1,0 +1,48 @@
+flowchart LR
+  subgraph ZU["Z0 - Nguoi dung va endpoint"]
+    U["Bac si / analyst / data owner"]
+    R["Recipient SDK - CP-ABE share"]
+  end
+  subgraph ZT["Z1 - Mien to chuc tin cay; co plaintext"]
+    G["Trusted Crypto Gateway - API + PEP + SDK"]
+    I["Identity provider + attribute sources"]
+    P["PDP - ABAC deny by default"]
+    B["Key broker - independent PEP"]
+    K["Software KMS - KEK per tenant/class"]
+    A["Attribute Authority - isolated master secret"]
+    V["Trusted registry - current versions + manifests"]
+    O["HE owner / PQ archiver - private keys"]
+  end
+  subgraph ZC["Z2 - Cloud storage/compute; khong tin cay ve bi mat"]
+    D["PostgreSQL OR MongoDB - ciphertext + token index"]
+    S["Encrypted snapshot / replica / CDC"]
+    H["BFV worker - encrypted SUM only"]
+  end
+  subgraph ZA["Z3 - Audit administration doc lap"]
+    L["Append-only log + signed checkpoint"]
+    W["External checkpoint witness"]
+  end
+  U -->|"F1 TLS + identity"| G
+  G --> I
+  G -->|"F2 context"| P
+  G -->|"F0/F8 key request"| B
+  B --> P
+  B --> K
+  G --> V
+  B --> V
+  G -->|"F3 write / F4 equality / F5 reject unsupported"| D
+  D -->|"F7 ciphertext only"| S
+  A -->|"F0 attribute key via authenticated provisioning"| R
+  A -->|"Authenticated public ABE parameters"| G
+  G -->|"P2 independent share capsule + encrypted export"| D
+  D -->|"Encrypted P2 artifact"| R
+  O -->|"Approved cohort export request"| G
+  G -->|"Authorized P3 plaintext inside Z1"| O
+  O -->|"P4 independent PQ archive capsule and data"| D
+  D -->|"P4 encrypted archive read"| O
+  O -->|"F6 public evaluation inputs"| H
+  H -->|"Encrypted result; not proven correct"| O
+  G -->|"F9 metadata only"| L
+  B -->|"F9 key-use metadata"| L
+  P -->|"F9 decision metadata"| L
+  L --> W

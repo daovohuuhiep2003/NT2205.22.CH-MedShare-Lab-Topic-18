@@ -1,0 +1,36 @@
+flowchart TD
+  ROOT["Software KMS root - trusted organization"]
+  KEK["KEK per tenant / data class / version"]
+  DEK["Fresh DEK per field value/version"]
+  DATA["P1 AES-GCM field ciphertext + immutable AAD"]
+  SEARCH["Independent search key per tenant/field/epoch"]
+  TOKEN["HMAC equality token - explicit leakage"]
+  AAMS["AA master secret - separate research domain"]
+  SK["User-bound attribute secret keys"]
+  ABEC["P2 CP-ABE capsule of random group secret"]
+  AKDF["KDF-derived wrap key"]
+  SHARE["Independent share DEK - no KMS fallback copy"]
+  SHDATA["P2 encrypted export"]
+  PQPK["Authenticated ML-KEM recipient public key"]
+  PQSS["P4 encapsulated shared secret + ciphertext"]
+  PQKDF["HKDF wrap key - transcript bound"]
+  PQDEK["Independent P4 DEK - PQ-only snapshot"]
+  PQDATA["P4 AES-GCM data"]
+  SIG["Separate ML-DSA signing keys"]
+  MAN["Signed policy / capsule manifest / checkpoint"]
+  ROOT --> KEK
+  KEK -->|"Wrap, not derive"| DEK
+  DEK --> DATA
+  ROOT -->|"Protect"| SEARCH
+  SEARCH --> TOKEN
+  AAMS --> SK
+  AAMS -->|"Publish public parameters"| ABEC
+  ABEC -->|"Authorized recovery of secret"| AKDF
+  SK --> AKDF
+  AKDF -->|"Wrap"| SHARE
+  SHARE --> SHDATA
+  PQPK --> PQSS
+  PQSS --> PQKDF
+  PQKDF -->|"Wrap"| PQDEK
+  PQDEK --> PQDATA
+  SIG --> MAN

@@ -1,0 +1,18 @@
+flowchart TB
+  U["User / data owner"]
+  subgraph Z1["Trusted organization - plaintext and keys"]
+    G["Gateway - API / PEP / crypto SDK"]
+    P["IdP / trusted attributes / ABAC PDP"]
+    B["Independent broker PEP / software KMS"]
+    V["Trusted current versions and digests"]
+    G -->|"F2 context"| P
+    G -->|"F0/F8 key request"| B
+    B --> P
+    G --> V
+    B --> V
+  end
+  U -->|"F1 TLS and identity"| G
+  G -->|"F3 write / F4 equality / F5 reject unsupported"| D["Cloud SQL or NoSQL - ciphertext / token index / F7 backup"]
+  G -->|"F9 filtered metadata"| A["Independent audit / signed checkpoint / external witness"]
+  B --> A
+  P --> A

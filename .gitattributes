@@ -1,0 +1,16 @@
+* text=auto
+*.md text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.mmd text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+*.png binary
+*.docx binary
+*.pdf binary
+# Preserve the original course documents byte-for-byte for SHA-256 checks.
+docs/requirements/course-guideline.md -text
+docs/requirements/topic-18.md -text
