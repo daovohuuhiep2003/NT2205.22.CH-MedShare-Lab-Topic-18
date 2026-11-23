@@ -2,7 +2,7 @@
 
 ## Root
 
-Root chỉ giữ README, CONTRIBUTING, SECURITY, cấu hình Git/editor/CI và các thư mục theo trách nhiệm. Không đặt proposal/plan/version-copy rải rác ở root.
+Root giữ README, CONTRIBUTING, SECURITY, LICENSE, cấu hình Git/editor/CI, các thư mục theo trách nhiệm và bộ tài liệu tiếng Việt cho nhóm/giảng viên (`TIEN_DO_HIEN_TAI.md`, `HUONG_DAN_DICH_VU.md`, `MUC_LUC_DU_AN.md`, báo cáo sơ lược, kịch bản thuyết trình, slide, sơ đồ Draw.io, `plan-mTLS.md`). Danh sách đầy đủ: [MUC_LUC_DU_AN.md](../../MUC_LUC_DU_AN.md).
 
 ## Cây tổng quan
 
@@ -13,12 +13,13 @@ Root chỉ giữ README, CONTRIBUTING, SECURITY, cấu hình Git/editor/CI và c
     - requirements/ — course-guideline.md, topic-18.md, source-analysis.md
     - planning/ — implementation-plan.md, team-work-plan.docx
     - design/, testing/, diagrams/, adr/, development/, maintenance/
-  - src/medshare/ — gateway/, crypto/, broker/, policy/, storage/
+  - src/medshare/ — auth/, gateway/, crypto/, broker/, policy/, storage/
+  - frontend/ — Web Portal Vue 3 (Vite, TailwindCSS)
   - workers/ — abe/, he/, pqc/
-  - infra/ — cấu hình lab khi triển khai
+  - infra/ — docker-compose.yml, vault/, certs/, runtime/ (local)
   - tests/ — tooling/, unit/, integration/, security/
   - datasets/, benchmarks/, analysis/, evidence/
-  - scripts/ — render_proposal.py, validate_docs.py, validate_proposal_sync.py, check_repo.py
+  - scripts/ — tooling tài liệu + setup, portal, ingest, pptx
   - README.md, CONTRIBUTING.md, SECURITY.md, .gitignore, .gitattributes, .editorconfig
   - .local-backups/ — chỉ local, không push
 
@@ -36,10 +37,10 @@ Root chỉ giữ README, CONTRIBUTING, SECURITY, cấu hình Git/editor/CI và c
 
 ## Source và runtime
 
-- `src/medshare/{gateway,crypto,broker,policy,storage}/`: package Python core; storage có adapter SQL/NoSQL khi implement.
-- `workers/{abe,he,pqc}/`: thí nghiệm nâng cao độc lập; chọn runtime/dependency trong feasibility spike.
-- `infra/`: DB, network, KMS/PDP, lab-volume và runbook. Chưa tạo Compose giả với credentials mặc định hoặc service placeholder.
-- `tests/{tooling,unit,integration,security}/`: tooling có tests thật; ba nhóm ứng dụng sẽ được tạo theo module.
+- `src/medshare/{auth,gateway,crypto,broker,policy,storage}/`: package Python core đã triển khai; storage dùng MongoDB + MinIO ([ADR-0001](../adr/0001-mongodb-only-storage.md)).
+- `workers/{abe,he,pqc}/`: worker mật mã nâng cao trong container riêng (ABE REST, HE CLI, PQC smoke test).
+- `infra/`: Compose 4 service (MongoDB, Vault, MinIO, abe-worker) với **credentials dev mặc định công khai** (xem SECURITY.md), cấu hình Vault bền vững, cert Portal.
+- `tests/{tooling,unit,integration,security}/`: tooling, unit và security đã có test (100 tests); integration chưa có.
 
 ## Dữ liệu và bằng chứng
 
@@ -48,10 +49,10 @@ Root chỉ giữ README, CONTRIBUTING, SECURITY, cấu hình Git/editor/CI và c
 - `analysis/`: notebook/script thống kê; `output/` local.
 - `evidence/`: schema, manifest mẫu không secret và báo cáo đã sanitize; `runs/` local cho raw evidence.
 
-Không commit chỉ để lấp thư mục. README trong các vùng chưa triển khai mô tả mục đích và điều kiện bắt đầu. Không tuyên bố có API, encryption hoặc benchmark khi mới có namespace.
+Không commit chỉ để lấp thư mục. README trong mỗi vùng ghi trạng thái thực tế; không tuyên bố có API, encryption hoặc benchmark khi chưa có code và test tương ứng.
 
 ## Chính sách file
 
-Dùng tên ASCII, kebab-case cho tài liệu, snake_case cho Python. Dependency manifest/lockfile được tạo bằng package manager khi thực sự có dependency đã duyệt; không có manifest giả trong scaffold. Markdown UTF-8/LF, DOCX/PNG binary. Hai source requirements có `-text` trong gitattributes để giữ hash qua Windows/Linux.
+Dùng tên ASCII, kebab-case cho tài liệu, snake_case cho Python. Python core chưa có manifest/lockfile (dependency được cài bởi `scripts/setup_ubuntu.sh`, liệt kê ở [environment-setup](environment-setup.md)); frontend có `package.json` + `package-lock.json`. Markdown UTF-8/LF, DOCX/PNG binary. Hai source requirements có `-text` trong gitattributes để giữ hash qua Windows/Linux.
 
 `.local-backups/` chứa archive khôi phục trước cấu trúc, không dùng làm lịch sử dự án và không push. Sau khi xác nhận remote backup và không cần bản nộp cũ, chủ dự án có thể tự xóa archive này.

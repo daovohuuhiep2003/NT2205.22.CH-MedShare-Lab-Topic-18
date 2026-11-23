@@ -2,7 +2,7 @@
 
 Kèm [Detailed project implementation](../planning/implementation-plan.md) và [protocol design](../design/crypto-and-protocol-design.md).
 
-**Trạng thái ban đầu của mọi experiment/test:** NOT_RUN. Những expected outcomes bên dưới là tiêu chí hoặc giới hạn cần xác nhận, không phải observed results. Lần lập tài liệu này chưa có application implementation để chạy test/benchmark.
+**Trạng thái (23/11/2026):** E1, E2, E3, E4, E5, E7 **đã chạy** (harness trong `benchmarks/`); E8, E9 NOT_RUN. TC đã có test tự động: TC-01 → TC-19, TC-24, TC-27, TC-30; còn NOT_RUN: TC-20 → TC-23, TC-25, TC-26, TC-28, TC-29. Kết quả observed và evidence ghi tại [ma trận truy vết](traceability-matrix.md). Những expected outcomes bên dưới là tiêu chí, không phải observed results. E1/E2 chạy trên MongoDB duy nhất ([ADR-0001](../adr/0001-mongodb-only-storage.md)); E4 dùng AC17 ([ADR-0002](../adr/0002-cpabe-ac17.md)).
 
 ## 1. Quy tắc thực nghiệm và an toàn
 

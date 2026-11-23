@@ -15,7 +15,7 @@
 Hệ thống được phân định thành 4 vùng tin cậy (Trust Zones):
 * **Z0 (Endpoint / Client):** Nơi gửi truy vấn người dùng (Bác sĩ, Điều dưỡng, Nhà phân tích) và nhận kết quả plaintext được phép.
 * **Z1 (Miền tổ chức tin cậy / TCB):** Chứa Trusted Crypto Gateway, ABAC Policy Engine (PDP), Key Broker và Software KMS (Vault). Nơi quản lý khóa và thực hiện mã hóa field.
-* **Z2 (Miền Cloud / Untrusted):** Chứa DBMS (PostgreSQL 16, MongoDB 7.0), BFV Homomorphic Worker và ổ đĩa mã hóa LUKS (B1). Kẻ tấn công DBA/Cloud Operator có toàn quyền tại đây nhưng không có khóa tại Z1.
+* **Z2 (Miền Cloud / Untrusted):** Chứa MongoDB 7.0, MinIO (tệp mã hóa), BFV Homomorphic Worker và ổ đĩa mã hóa LUKS (B1). PostgreSQL đã bị loại ([ADR-0001](../adr/0001-mongodb-only-storage.md)). Kẻ tấn công DBA/Cloud Operator có toàn quyền tại đây nhưng không có khóa tại Z1.
 * **Z3 (Miền Kiểm toán / Audit):** Hệ thống ghi log bất biến (Append-only audit) độc lập với quyền rollback của DBA.
 
 ---
@@ -42,9 +42,10 @@ Hệ thống được phân định thành 4 vùng tin cậy (Trust Zones):
 | **`fastapi`** | `>= 0.110.0` | Xây dựng REST API cho Trusted Crypto Gateway, Key Broker và các endpoint kiểm soát truy cập (F0–F4). |
 | **`uvicorn`** | `>= 0.29.0` | ASGI Web Server hiệu năng cao chạy FastAPI. |
 | **`pydantic`** | `>= 2.7.0` | Ràng buộc schema AAD context, versioning, validate request/response và chặn truy vấn không hợp lệ (F5 deny). |
-| **`psycopg[binary]`** | `>= 3.1.0` | Driver kết nối CSDL **PostgreSQL 16+**, hỗ trợ Row-Level Security (RLS) và giao dịch CAS. |
 | **`pymongo`** | `>= 4.7.0` | Driver kết nối CSDL NoSQL **MongoDB 7.0+**, quản lý tenant collections và key capsules. |
-| **`hvac`** | `>= 2.2.0` | Client kết nối HashiCorp Vault (Transit Secrets Engine) cho Software KMS Z1. |
+| **`minio`** | `>= 7.2.0` | Client S3 cho MinIO (lưu tệp y tế đã mã hóa chunked). |
+| **`argon2-cffi`** | `>= 23.1.0` | Băm mật khẩu Argon2id cho IdP Zone Z1. |
+| **`hvac`** *(tùy chọn)* | `>= 2.2.0` | Client Vault chính thức; `VaultKmsClient` hiện gọi Transit REST trực tiếp bằng `requests`. |
 | **`requests`** / **`httpx`** | `>= 2.31.0` / `>= 0.27.0` | Giao tiếp HTTP nội bộ giữa Gateway, Broker và các Container Worker (ABE, HE, PQC). |
 
 ### 3.2. Bộ công cụ Kiểm thử, Đo lường & Phân tích bằng chứng (`tests/`, `benchmarks/`, `analysis/`)
@@ -75,25 +76,25 @@ Hệ thống được phân định thành 4 vùng tin cậy (Trust Zones):
 * **Tham số mật mã:** Đa thức bậc $N=8192$, hệ số an toàn 128-bit, batching prime $t \approx 30 \text{ bit}$.
 * **Thư viện chính:**
   * `Microsoft SEAL` (bản C++ 4.x).
-  * Service wrapper microservice REST bằng C++ (Crow / cpp-httplib) hoặc `seal-python`.
+  * Binary CLI `seal_bfv_engine` (C++17) được `src/medshare/crypto/he_client.py` gọi trực tiếp; chưa có REST service.
 * **Yêu cầu build:** `cmake >= 3.16`, `g++ >= 11` (hoặc `clang >= 12`).
 
 #### C. ABE Worker — Mã hóa thuộc tính (`workers/abe/`)
-* **Thuật toán triển khai:** **CP-ABE (Ciphertext-Policy Attribute-Based Encryption)** theo sơ đồ BSW07, bọc share DEK phục vụ xuất dữ liệu nhiều người nhận (P2).
+* **Thuật toán triển khai:** **CP-ABE** theo sơ đồ **AC17** (Agrawal–Chase 2017) trên BN254 và SS512, bọc share DEK phục vụ xuất dữ liệu nhiều người nhận (P2) — xem [ADR-0002](../adr/0002-cpabe-ac17.md). Chạy dịch vụ REST FastAPI `:9002`.
 * **Thư viện chính:**
-  * `Charm-Crypto` (hỗ trợ pairing-based cryptography trên Python 3.9/3.10) hoặc `OpenABE` (C++).
+  * `Charm-Crypto` (pairing-based cryptography, Python 3.10 trong container).
 * **Thư viện C nền tảng bắt buộc:**
   * `libgmp-dev` (GNU Multiple Precision Arithmetic Library).
-  * `libpbc-dev` (Pairing-Based Cryptography Library).
+  * Stanford PBC 0.5.14 (biên dịch từ nguồn; Ubuntu không có gói `libpbc-dev`).
   * `libssl-dev` (OpenSSL).
 
 ---
 
 ## 4. Hạ tầng máy chủ & Cơ sở dữ liệu (`infra/`)
 
-* **PostgreSQL 16+**: CSDL quan hệ chính (bật `Row Level Security - RLS`, connection pool riêng theo tenant).
-* **MongoDB 7.0+**: CSDL NoSQL đối chiếu (tenant-scoped collections).
-* **HashiCorp Vault** (`hashicorp/vault:latest`): Vận hành Software KMS ở vùng tin cậy Z1 qua Transit Secrets Engine.
+* **MongoDB 7.0**: CSDL duy nhất cho dữ liệu văn bản (envelope, capsule, blind index, tài khoản Z1).
+* **MinIO** (`minio/minio`): Object storage S3 cho tệp y tế đã mã hóa.
+* **HashiCorp Vault 1.15.6**: Software KMS Z1 qua Transit, chạy **file storage bền vững + tự unseal** ([ADR-0003](../adr/0003-vault-persistent-lab-unseal.md), cấu hình `infra/vault/`).
 * **`cryptsetup`** (Linux command): Thiết lập volume mã hóa ảo `dm-crypt / LUKS` phục vụ baseline B1 (At-rest volume encryption).
 
 ---
@@ -123,7 +124,7 @@ python -m venv .venv
 # Nâng cấp pip và cài đặt dependencies cho Core & Test
 pip install --upgrade pip
 pip install cryptography>=43.0.0 fastapi>=0.110.0 uvicorn>=0.29.0 pydantic>=2.7.0 \
-            "psycopg[binary]>=3.1.0" pymongo>=4.7.0 hvac>=2.2.0 requests>=2.31.0 httpx>=0.27.0 \
+            pymongo>=4.7.0 minio>=7.2.0 argon2-cffi>=23.1.0 requests>=2.31.0 httpx>=0.27.0 \
             pytest>=8.0.0 pytest-asyncio>=0.23.0 locust>=2.24.0 pandas>=2.2.0 numpy>=1.26.0 \
             matplotlib>=3.8.0 seaborn>=0.13.0
 ```
@@ -131,8 +132,9 @@ pip install cryptography>=43.0.0 fastapi>=0.110.0 uvicorn>=0.29.0 pydantic>=2.7.
 #### Bước 2: Khởi động Hạ tầng DB & KMS bằng Docker Compose
 Tạo và chạy stack CSDL tại `infra/`:
 ```bash
+docker build -t medshare-abe-worker ./workers/abe   # image cục bộ, cần trước compose
 cd infra
-docker compose up -d postgres-cloud mongo-cloud software-kms
+docker compose up -d   # mongo-cloud, vault-kms, minio-cloud, abe-worker
 ```
 
 #### Bước 3: Tạo ổ đĩa ảo mã hóa Baseline B1 (dm-crypt/LUKS)
@@ -167,52 +169,47 @@ docker build -t medshare-abe-worker ./workers/abe
 
 ---
 
-## 6. Mô hình triển khai và Danh mục Cổng mạng cho Buổi Demo
+## 6. Mô hình triển khai hiện tại và danh mục cổng
 
-### Mô hình khuyến nghị: 1 Máy trạm duy nhất phân tách Subnet Docker
-Toàn bộ hệ thống chạy trên 1 laptop/PC (16GB–32GB RAM) thông qua 3 Docker Bridge Networks:
-* `net-z0-client`: Kết nối Client $\leftrightarrow$ Gateway.
-* `net-z1-trusted`: Mạng nội bộ TCB (Gateway, Broker, OPA, KMS).
-* `net-z2-cloud`: Mạng Cloud (PostgreSQL, MongoDB, BFV Worker).
+### Hiện trạng (23/11/2026)
+Toàn bộ chạy trên 1 máy Ubuntu. Gateway/Portal chạy **trên host** (`scripts/run_portal.sh`), 4 service còn lại chạy trong **một Docker network mặc định** của Compose. Chưa tách subnet Z1/Z2 và chưa có TLS giữa các service — đây là giới hạn đã biết (xem `plan-mTLS.md` và đánh giá tại `TIEN_DO_HIEN_TAI.md` mục 7).
 
 ```mermaid
 flowchart TD
-    subgraph Z0["Vùng Z0 (Client Network)"]
-        Client["Client Test Runner / CLI"]
+    subgraph Z0["Vùng Z0 (Trình duyệt)"]
+        Client["Web Portal Vue 3"]
     end
 
-    subgraph Z1["Vùng Z1 (Trusted Internal Network)"]
-        GW["Crypto Gateway (:8000)"]
-        Broker["Key Broker (:8200)"]
-        OPA["ABAC PDP (:8181)"]
-        Vault["Software KMS (:8201)"]
+    subgraph Z1["Vùng Z1 (Host + container tin cậy)"]
+        GW["Gateway FastAPI + ABAC + Key Broker (:8443 TLS / :8000)"]
+        Vault["Vault KMS Transit (:8200)"]
+        ABE["CP-ABE worker (:9002)"]
     end
 
-    subgraph Z2["Vùng Z2 (Cloud Network)"]
-        PG["PostgreSQL 16 (:5432)"]
+    subgraph Z2["Vùng Z2 (Cloud không tin cậy)"]
         Mongo["MongoDB 7.0 (:27017)"]
-        SEAL["SEAL BFV Worker (:9001)"]
+        MinIO["MinIO S3 (:9000, console :9001)"]
+        SEAL["SEAL BFV CLI (gọi qua subprocess)"]
     end
 
-    Client -->|API Requests| GW
-    GW --> Broker
-    GW --> OPA
-    Broker --> Vault
-    GW -->|Chỉ gửi Ciphertext| PG
-    GW -->|Chỉ gửi Ciphertext| Mongo
-    GW -->|Chỉ gửi Ciphertext Batch| SEAL
+    Client -->|HTTPS TLS 1.3| GW
+    GW -->|HTTP, chưa mTLS| Vault
+    GW -->|HTTP, chưa mTLS| ABE
+    GW -->|Chỉ ciphertext| Mongo
+    GW -->|Chỉ ciphertext chunked| MinIO
+    GW -->|Chỉ ciphertext BFV| SEAL
 ```
 
-### Bảng phân bổ Port dịch vụ phục vụ Demo:
+### Bảng cổng dịch vụ
 
-| Zone | Dịch vụ | Port máy chủ | Ghi chú bảo mật |
+| Zone | Dịch vụ | Cổng | Ghi chú bảo mật |
 | :--- | :--- | :--- | :--- |
-| **Z1** | `crypto-gateway` | `8000` | Cổng tiếp nhận duy nhất cho người dùng và ứng dụng. |
-| **Z1** | `abac-pdp` | `8181` | Chỉ truy cập được từ mạng nội bộ Z1. |
-| **Z1** | `key-broker` | `8200` | Chỉ truy cập được từ Gateway Z1. |
-| **Z1** | `software-kms` | `8201` | Vault Transit; chặn toàn bộ kết nối từ Z2 (Cloud). |
-| **Z2** | `postgres-cloud` | `5432` | DBA có thể đăng nhập trực tiếp để kiểm tra (chỉ thấy ciphertext). |
-| **Z2** | `mongo-cloud` | `27017` | DBA có thể query collections (chỉ thấy key capsules). |
-| **Z2** | `he-worker` | `9001` | Worker tính tổng SUM trên ciphertext. |
-| **Z0** | `abe-worker` | `9002` | Worker giải mã CP-ABE phía người nhận. |
-| **Z0** | `pqc-worker` | `9003` | Worker đóng gói khóa ML-KEM và xác thực ML-DSA. |
+| **Z0/Z1** | Web Portal + Gateway (host) | `8443` (TLS 1.3) / `8000` (HTTP) | Cổng duy nhất dành cho người dùng. |
+| **Z1** | `vault-kms` | `8200` | Token lab công khai; không mở ra mạng ngoài. |
+| **Z1** | `abe-worker` | `9002` | REST nội bộ, chưa xác thực client. |
+| **Z2** | `mongo-cloud` | `27017` | DBA đăng nhập trực tiếp chỉ thấy ciphertext/capsule. |
+| **Z2** | `minio-cloud` | `9000` / `9001` | Chỉ chứa object `.enc`. |
+| — | PQC worker | *(CLI)* | Smoke test ML-KEM-768 / ML-DSA-65, chưa tích hợp. |
+
+### Mô hình mục tiêu (chưa triển khai)
+Tách 3 Docker network `net-z0-client`, `net-z1-trusted`, `net-z2-cloud`; container hóa Gateway; mTLS + SPIFFE ID giữa Gateway và Vault/MinIO/abe-worker (phạm vi M1–M4 trong `TIEN_DO_HIEN_TAI.md` mục 7).

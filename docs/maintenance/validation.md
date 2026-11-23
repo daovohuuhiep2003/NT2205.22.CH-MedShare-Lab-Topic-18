@@ -1,5 +1,15 @@
 # Validation và thay đổi cấu trúc repository
 
+## Cập nhật 23/11/2026
+
+- `python -B scripts/check_repo.py`: PASS, 16 tooling tests.
+- `PYTHONPATH=src:. .venv/bin/python -m pytest tests/ -q`: **100 passed** trên lab đang chạy (MongoDB, Vault, MinIO, abe-worker). Lần đầu thất bại ở collection `tests/unit/test_portal_api.py` vì Vault dev mode mất Transit sau restart; đã sửa bằng [ADR-0003](../adr/0003-vault-persistent-lab-unseal.md) và kiểm chứng KEK còn sau `docker restart`.
+- Sửa thêm: healthcheck MinIO (dùng `wget` thay `curl`), script ingest ghi đúng DB `medshare_db`.
+- `validate_docs.py` chỉ kiểm tra link tới file được track: các báo cáo trong `benchmarks/results/` và `evidence/runs/` bị gitignore nên tài liệu ghi chúng dạng đường dẫn text, không dạng link.
+- CI vẫn chỉ chạy tooling checks; unit/security tests cần lab nên chạy thủ công. Mục bên dưới là bản ghi lần tái cấu trúc 16/09/2026, giữ nguyên làm lịch sử.
+
+## Bản ghi 16/09/2026
+
 Ngày: 16/09/2026. Đây là kiểm tra repository/tài liệu, không phải chứng nhận an toàn mật mã.
 
 ## Nguồn chuẩn

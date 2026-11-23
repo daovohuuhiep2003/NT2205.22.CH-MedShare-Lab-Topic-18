@@ -2,7 +2,12 @@
 
 ## Khởi tạo và chia sẻ
 
-Repository local dùng nhánh `main`. Chưa có commit/remote được tạo thay người dùng. Nếu thư mục copy chưa có Git, chạy `git init -b main`.
+Repository dùng nhánh `main`. Remote hiện tại:
+
+- `hiep` → `github.com/daovohuuhiep2003/NT2205.22.CH-MedShare-Lab-Topic-18` (**công khai**, có `LICENSE` Apache-2.0 từ lúc tạo repo; lịch sử local đã được merge với commit khởi tạo này).
+- `origin` → `github.com/gado321/NT2205.11.CH_Project` (remote cũ).
+
+Vì repo công khai, mọi thứ push lên coi như đã công bố — kiểm tra kỹ theo [SECURITY](../../SECURITY.md) trước khi push. Các bước dưới đây áp dụng khi tạo remote mới.
 
 1. Tạo remote **private, trống** trên GitHub/GitLab; không bật tạo README/license để tránh history không liên quan. Không đặt token trong URL.
 2. Tại root, chạy `python -B scripts/check_repo.py`, đọc `git status --short` và kiểm tra nội dung sẽ commit.

@@ -1,7 +1,7 @@
 # Detailed project implementation
 ## Kế hoạch triển khai chi tiết Topic 18 — bậc thạc sĩ
 
-**Phiên bản thiết kế:** 1.1 — đồng bộ phạm vi và repository ngày 16/09/2026. **Trạng thái:** thiết kế đề xuất, chưa triển khai.  
+**Phiên bản thiết kế:** 1.1 — đồng bộ phạm vi và repository ngày 16/09/2026. **Trạng thái (23/11/2026):** WP1–WP8 và WP10 đã triển khai, E1/E2/E3/E4/E5/E7 đã chạy; WP9 (E8/E9) là việc của Tuần 11. Tiến độ: [TIEN_DO_HIEN_TAI.md](../../TIEN_DO_HIEN_TAI.md); quyết định lệch thiết kế: [ADR](../adr/README.md).  
 **Căn cứ:** hai tài liệu nguồn đã đọc đầy đủ; xem [phân tích nguồn và rubric](../requirements/source-analysis.md).  
 **Bản đăng ký:** [project proposal](../proposal/project-proposal.md).
 
@@ -264,9 +264,9 @@ Không thêm SLH-DSA/HQC vào implementation chỉ để tăng số thuật toá
 |---|---|---|
 | Gateway/SDK/test harness | Python supported stable runtime, web framework nhẹ, pytest | AEAD API tồn tại, bytes serialization, sync/async bounds, supported runtime |
 | NoSQL adapter | MongoDB + supported driver | Collection privilege, schema, atomic update, index behavior |
-| PDP | OPA/Rego hoặc engine tương đương | Policy version syntax, table-driven tests, deny on parse/error |
-| KMS | Vault Transit hoặc software KMS đã có authenticated wrap/context | TLS/auth/persistence, backup, key versions, no root token in app; nếu mock phải ghi mock |
-| CP-ABE | Charm CPabe_BSW07 candidate, isolated Linux container | Build + documented scheme/group/security profile; không dùng SS512 ví dụ như production level |
+| PDP | OPA/Rego hoặc engine tương đương — **đã chọn:** engine Python tự viết `policy/abac.py` (deny-by-default, bảng quy tắc) | Policy version syntax, table-driven tests, deny on parse/error |
+| KMS | Vault Transit hoặc software KMS đã có authenticated wrap/context — **đã chọn:** Vault 1.15.6 Transit `derived: true`, file storage ([ADR-0003](../adr/0003-vault-persistent-lab-unseal.md)) | TLS/auth/persistence, backup, key versions, no root token in app; nếu mock phải ghi mock |
+| CP-ABE | Charm CPabe_BSW07 candidate, isolated Linux container — **đã chọn:** AC17 BN254/SS512 ([ADR-0002](../adr/0002-cpabe-ac17.md)) | Build + documented scheme/group/security profile; không dùng SS512 ví dụ như production level |
 | PQC | liboqs qua adapter hoặc library có final ML-KEM/ML-DSA | Đúng final algorithm IDs, test vectors, version/license, API validation |
 | HE | Microsoft SEAL C++ BFV worker | Build examples, parameter security check, serialization validation |
 | Infra | Compose trong Linux VM/WSL2, dedicated encrypted lab disk | Health checks, identities/network separation, exact volume target và recovery |
@@ -323,7 +323,7 @@ Các endpoint là **contract cần tạo**, không phải command để chạy n
 | evidence/ | Run manifests, redacted metadata, reports | checksum/traceability; actual secrets excluded |
 | docs/ | A1–A10, ADRs, threat model, report/runbook | links/ID coverage/diagram checks |
 
-Repository đã có namespace/README theo trách nhiệm để cộng tác. Đây không phải implementation; module/API, dependency và tests ứng dụng được tạo cùng nhau khi sprint bắt đầu. Tooling trong scripts/ và tests/tooling/ chỉ kiểm tra tài liệu/repository.
+Cập nhật 23/11/2026: các module trên đã có implementation và test (100 tests), trừ `tests/integration/` (chưa có test riêng) và audit checkpoint Z3. API thực tế nằm trong `src/medshare/gateway/api.py` (`/api/v1/...`), khác tên với bảng contract 8.3 ở trên; các endpoint `/migrations` và `/audit/checkpoints` chưa có.
 
 ### 8.5 Backlog theo dependency
 

@@ -14,7 +14,7 @@ flowchart LR
     O["HE owner / PQ archiver - private keys"]
   end
   subgraph ZC["Z2 - Cloud storage/compute; khong tin cay ve bi mat"]
-    D["PostgreSQL OR MongoDB - ciphertext + token index"]
+    D["MongoDB 7.0 + MinIO - ciphertext + token index"]
     S["Encrypted snapshot / replica / CDC"]
     H["BFV worker - encrypted SUM only"]
   end

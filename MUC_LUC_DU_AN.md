@@ -262,12 +262,12 @@ Chứa khung mã nguồn Python Core (chạy trong môi trường ảo `.venv` t
 ---
 
 ### 2.6. Thư mục Bằng chứng Thực nghiệm ([`evidence/`](evidence/))
-* [`evidence/runs/e1_baseline_evidence.md`](evidence/runs/e1_baseline_evidence.md): Bằng chứng thực nghiệm độc lập của Thí nghiệm E1, lưu giữ bảng số liệu latency p50/p95, dung lượng lưu trữ, entropy đĩa mã hóa và mẫu dữ liệu rò rỉ trước DBA.
-* [`evidence/runs/e2_field_overhead_evidence.md`](evidence/runs/e2_field_overhead_evidence.md): Bằng chứng thực nghiệm Thí nghiệm E2, bảng số liệu phân rã chi phí ablation, kết quả 4 ranh giới an toàn TC-02, TC-06, TC-09, TC-10.
-* [`evidence/runs/e3_abac_bypass_evidence.md`](evidence/runs/e3_abac_bypass_evidence.md): Bằng chứng thực nghiệm Thí nghiệm E3, bảng chân lý Truth Table, độ trễ PDP CPU microseconds, và bằng chứng chốt chặn phòng thủ hai lớp Dual PEP (TC-27 Gate Tuần 6).
-* [`evidence/runs/e4_cpabe_sharing_evidence.md`](evidence/runs/e4_cpabe_sharing_evidence.md): Bằng chứng Thí nghiệm E4 (kích thước/thời gian CP-ABE theo $k$, TC-11 → TC-14).
-* [`evidence/runs/e7_homomorphic_sum_evidence.md`](evidence/runs/e7_homomorphic_sum_evidence.md): Bằng chứng Thí nghiệm E7 (Integer Exactness, noise budget, TC-18/19/30).
-* [`evidence/runs/e5_leakage_analysis_evidence.md`](evidence/runs/e5_leakage_analysis_evidence.md): Bằng chứng thực nghiệm Thí nghiệm E5, bảng số liệu rò rỉ mẫu truy vấn, kết quả tấn công suy luận tần suất kèm khoảng tin cậy Bootstrap CI 95%, và khuyến nghị chuẩn không đánh chỉ mục Blind Index trên các trường chẩn đoán lâm sàng có entropy thấp.
+* `evidence/runs/e1_baseline_evidence.md`: Bằng chứng thực nghiệm độc lập của Thí nghiệm E1, lưu giữ bảng số liệu latency p50/p95, dung lượng lưu trữ, entropy đĩa mã hóa và mẫu dữ liệu rò rỉ trước DBA.
+* `evidence/runs/e2_field_overhead_evidence.md`: Bằng chứng thực nghiệm Thí nghiệm E2, bảng số liệu phân rã chi phí ablation, kết quả 4 ranh giới an toàn TC-02, TC-06, TC-09, TC-10.
+* `evidence/runs/e3_abac_bypass_evidence.md`: Bằng chứng thực nghiệm Thí nghiệm E3, bảng chân lý Truth Table, độ trễ PDP CPU microseconds, và bằng chứng chốt chặn phòng thủ hai lớp Dual PEP (TC-27 Gate Tuần 6).
+* `evidence/runs/e4_cpabe_sharing_evidence.md`: Bằng chứng Thí nghiệm E4 (kích thước/thời gian CP-ABE theo $k$, TC-11 → TC-14).
+* `evidence/runs/e7_homomorphic_sum_evidence.md`: Bằng chứng Thí nghiệm E7 (Integer Exactness, noise budget, TC-18/19/30).
+* `evidence/runs/e5_leakage_analysis_evidence.md`: Bằng chứng thực nghiệm Thí nghiệm E5, bảng số liệu rò rỉ mẫu truy vấn, kết quả tấn công suy luận tần suất kèm khoảng tin cậy Bootstrap CI 95%, và khuyến nghị chuẩn không đánh chỉ mục Blind Index trên các trường chẩn đoán lâm sàng có entropy thấp.
 
 
 ---

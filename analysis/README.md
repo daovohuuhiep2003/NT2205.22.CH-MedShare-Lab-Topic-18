@@ -1,5 +1,5 @@
-# Phân tích kết quả — chưa có dữ liệu thực nghiệm
+# Phân tích kết quả
 
-Đặt script/notebook thống kê, leakage inference và plots khi có raw results. Output/ local không commit. Report expected/observed riêng; giữ baseline, units và run-level confidence intervals phù hợp.
+Số liệu thô hiện nằm trong `benchmarks/results/*.json` (local). Phân tích thống kê đã có nằm trong từng harness (ví dụ bootstrap CI 95% ở E5). Chưa có script/notebook tổng hợp riêng; dự kiến bổ sung ở Tuần 11–12 để vẽ biểu đồ cho báo cáo. `output/` local không commit.
 
-Chỉ đọc evidence đã sanitize hoặc dữ liệu synthetic được phép; không đưa secret/PII vào notebook output.
+Chỉ đọc evidence đã sanitize hoặc dữ liệu synthetic; không đưa secret/PII vào notebook output.

@@ -150,7 +150,7 @@ Ban đầu đóng gói 2 dịch vụ dưới đây; hiện tại compose có 4 s
     * `TC-06`: Chặn đứng 100% truy cập chéo tenant và tráo đổi ngữ cảnh bệnh nhân.
     * `TC-09`: Xoay vòng KEK thành công, rewrap capsule sang KEK v2 trong khi mã băm SHA-256 của bản mã dữ liệu giữ nguyên 100%.
     * `TC-10`: Quét toàn diện DB với các synthetic canary strings nhạy cảm — xác nhận **0 chuỗi Plaintext bị rò rỉ**.
-  * Báo cáo chi tiết: [`benchmarks/results/e2_field_overhead_report.json`](benchmarks/results/e2_field_overhead_report.json) và [`evidence/runs/e2_field_overhead_evidence.md`](evidence/runs/e2_field_overhead_evidence.md).
+  * Báo cáo chi tiết: `benchmarks/results/e2_field_overhead_report.json` và `evidence/runs/e2_field_overhead_evidence.md`.
 * **Tổng số kiểm thử tự động:** **51/51 tests PASSED 100%**.
 
 ---
@@ -176,7 +176,7 @@ Ban đầu đóng gói 2 dịch vụ dưới đây; hiện tại compose có 4 s
     * `TC-04`: Break-glass cấp quyền xem đầy đủ khi vé hợp lệ; từ chối 100% vé đã hết hạn hoặc vé giả mạo.
     * `TC-07`: Bác sĩ bị thêm vào danh sách thu hồi bị chặn truy cập 100% lập tức (Linearity).
     * `TC-27` (**CRITICAL GATE TUẦN 6 PASSED**): Malicious DBA dùng quyền root truy vấn trực tiếp MongoDB để trộm bản mã và KeyCapsule, sau đó gọi thẳng Broker unwrap DEK $\rightarrow$ **Broker PEP phát hiện và từ chối unwrap (`AccessDeniedError`)**. DBA hoàn toàn thất bại trong việc đọc plaintext!
-  * Báo cáo chi tiết: [`benchmarks/results/e3_abac_bypass_report.json`](benchmarks/results/e3_abac_bypass_report.json) và [`evidence/runs/e3_abac_bypass_evidence.md`](evidence/runs/e3_abac_bypass_evidence.md).
+  * Báo cáo chi tiết: `benchmarks/results/e3_abac_bypass_report.json` và `evidence/runs/e3_abac_bypass_evidence.md`.
 * **Tổng số kiểm thử tự động:** **62/62 tests PASSED 100%**.
 
 ---
@@ -191,7 +191,7 @@ Ban đầu đóng gói 2 dịch vụ dưới đây; hiện tại compose có 4 s
   * Phân tích rò rỉ quan sát được (Leakage Profile: Search Pattern, Access Pattern, Volume Leakage).
   * Mô phỏng tấn công suy luận tần suất (*Frequency Inference Attack*) trên phân bố lệch (skewed) so với phân bố đều (uniform), định lượng rõ ràng rủi ro trên các trường có entropy thấp (như mã bệnh ICD-10).
   * Kiểm chứng các security gates: `TC-15` (Tra cứu chính xác 100%), `TC-16` (Phân tích rò rỉ định lượng), `TC-17` (Từ chối bản ghi tráo index).
-* **Báo cáo chi tiết:** [`benchmarks/results/e5_leakage_analysis_report.json`](benchmarks/results/e5_leakage_analysis_report.json) và [`evidence/runs/e5_leakage_analysis_evidence.md`](evidence/runs/e5_leakage_analysis_evidence.md).
+* **Báo cáo chi tiết:** `benchmarks/results/e5_leakage_analysis_report.json` và `evidence/runs/e5_leakage_analysis_evidence.md`.
 
 ---
 
@@ -205,7 +205,7 @@ Ban đầu đóng gói 2 dịch vụ dưới đây; hiện tại compose có 4 s
   * Khảo sát cohort từ $N=10$ đến $N=1000$: Kết quả SUM bản mã khớp 100% với Plaintext Ground Truth (Integer Exactness - `TC-18`).
   * Mức tiêu hao Noise Budget cực thấp: Sau 1.000 phép cộng đồng cấu liên tiếp, ngân sách nhiễu chỉ giảm từ ~135 bits xuống ~131 bits (tiêu hao ~4 bits), không cần Bootstrapping hay Relinearization.
   * Minh chứng giới hạn an toàn (`TC-19` - LIMIT Case): BFV bảo vệ Confidentiality nhưng không bảo vệ Integrity trước máy chủ ác ý (cần chữ ký số/ZK ngoài để chứng thực kết quả).
-* **Báo cáo chi tiết:** [`benchmarks/results/e7_bfv_results.json`](benchmarks/results/e7_bfv_results.json) và [`evidence/runs/e7_homomorphic_sum_evidence.md`](evidence/runs/e7_homomorphic_sum_evidence.md).
+* **Báo cáo chi tiết:** `benchmarks/results/e7_bfv_results.json` và `evidence/runs/e7_homomorphic_sum_evidence.md`.
 * **Tổng số kiểm thử tự động:** **85/85 tests PASSED 100%**.
 
 ---
@@ -227,7 +227,7 @@ Ban đầu đóng gói 2 dịch vụ dưới đây; hiện tại compose có 4 s
   * **TC-14 (Offline Decryptability Boundary - LIMIT Case):** Dữ liệu lịch sử đã phân phối cho client kèm khóa hợp lệ vẫn có thể giải mã được ngoại tuyến (Mật mã học không thể can thiệp vào ổ đĩa offline của client). Xác lập yêu cầu bắt buộc: Khi thu hồi quyền, máy chủ phải sinh **fresh share_DEK** và mã hóa lại (re-encrypt) nội dung mới/cập nhật.
 * **Bộ kiểm thử bảo mật chuyên biệt ([`tests/security/test_e4_cpabe_sharing.py`](tests/security/test_e4_cpabe_sharing.py)):**
   * 6 test cases mới kiểm thử toàn diện TC-11, TC-12, TC-13, TC-14, biến dị AEAD tamper tag/ciphertext/context swapping.
-* **Báo cáo chi tiết:** [`benchmarks/results/e4_cpabe_results.json`](benchmarks/results/e4_cpabe_results.json) và [`evidence/runs/e4_cpabe_sharing_evidence.md`](evidence/runs/e4_cpabe_sharing_evidence.md).
+* **Báo cáo chi tiết:** `benchmarks/results/e4_cpabe_results.json` và `evidence/runs/e4_cpabe_sharing_evidence.md`.
 * **Tổng số kiểm thử tự động:** **91/91 tests PASSED 100%**.
 
 ---
