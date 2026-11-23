@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  mongo-cloud:
+    image: mongo:7.0
+    container_name: medshare-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: medshare_dba
+      MONGO_INITDB_ROOT_PASSWORD: dba_secret_dev_pass
+      MONGO_INITDB_DATABASE: medshare_records
+    volumes:
+      - ./runtime/mongo:/data/db
+    healthcheck:
+      test: ["CMD","mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vault-kms:
+    image: hashicorp/vault:1.15.6
+    container_name: medshare-vault-kms
+    restart: unless-stopped
+    ports:
+      - "8200:8200"
+    # Persistent file storage + auto-unseal (lab). Replaces `server -dev`, whose
+    # in-memory storage lost the Transit engine and every KEK on restart.
+    entrypoint: ["/bin/sh", "/vault/config/entrypoint.sh"]
+    environment:
+      VAULT_ADDR: http://127.0.0.1:8200
+      VAULT_LAB_ROOT_TOKEN: dev-root-token-topic18
+    volumes:
+      - ./vault:/vault/config:ro
+      - ./runtime/vault:/vault/file
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      # Healthy only when unsealed AND the Transit engine is mounted.
+      test: ["CMD-SHELL", "VAULT_TOKEN=dev-root-token-topic18 vault secrets list | grep -q '^transit/'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-cloud:
+    image: minio/minio:latest
+    container_name: medshare-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: medshare_admin
+      MINIO_ROOT_PASSWORD: minio_secret_dev_pass
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./runtime/minio:/data
+    healthcheck:
+      # The minio/minio image ships no curl; use BusyBox wget, which it does include.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  abe-worker:
+    image: medshare-abe-worker:latest
+    container_name: medshare-abe-worker
+    restart: unless-stopped
+    ports:
+      - "9002:9002"
+    volumes:
+      - ../workers/abe:/app
+    command: python3 -m uvicorn service:app --host 0.0.0.0 --port 9002
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:9002/health\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+

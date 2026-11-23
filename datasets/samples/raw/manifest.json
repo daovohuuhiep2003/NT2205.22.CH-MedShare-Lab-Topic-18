@@ -1,0 +1,126 @@
+{
+  "total_files": 15,
+  "total_size_bytes": 107845506,
+  "files": [
+    {
+      "filename": "lab_report_complete_blood_count.pdf",
+      "relative_path": "reports/lab_report_complete_blood_count.pdf",
+      "modality": "LAB_REPORT",
+      "mime_type": "application/pdf",
+      "size_bytes": 1641,
+      "sha256": "8d1b0ac3aa8fd0af6f21f0b34a5fc148f54d87312b868370cf254c0146a899e0"
+    },
+    {
+      "filename": "pathology_biopsy_report.pdf",
+      "relative_path": "reports/pathology_biopsy_report.pdf",
+      "modality": "LAB_REPORT",
+      "mime_type": "application/pdf",
+      "size_bytes": 1398,
+      "sha256": "4c44b7cbfe294f554bc36f40ddd55f3a8ed99745485bdc6d259a237d740a123d"
+    },
+    {
+      "filename": "radiology_findings_cxr.pdf",
+      "relative_path": "reports/radiology_findings_cxr.pdf",
+      "modality": "LAB_REPORT",
+      "mime_type": "application/pdf",
+      "size_bytes": 1469,
+      "sha256": "d1cdd4d5ca2ff5b3e9b5f1b3f2e381838842a3f6be0a8d6ddc700b163d16018f"
+    },
+    {
+      "filename": "ultrasound_aloka_16.dcm",
+      "relative_path": "ultrasound/ultrasound_aloka_16.dcm",
+      "modality": "ULTRASOUND",
+      "mime_type": "application/dicom",
+      "size_bytes": 873140,
+      "sha256": "f1a2d5f7c4ffe87dc589b12738084099fe44a436f6980f5d7e96a026ad356d65"
+    },
+    {
+      "filename": "ultrasound_cardiac_2d.dcm",
+      "relative_path": "ultrasound/ultrasound_cardiac_2d.dcm",
+      "modality": "ULTRASOUND",
+      "mime_type": "application/dicom",
+      "size_bytes": 922878,
+      "sha256": "af5a66e40cd49d15dfbf7b78c850eba0662bdc7339339c3fa13f123a57e812cb"
+    },
+    {
+      "filename": "ultrasound_color_doppler_3d.dcm",
+      "relative_path": "ultrasound/ultrasound_color_doppler_3d.dcm",
+      "modality": "ULTRASOUND",
+      "mime_type": "application/dicom",
+      "size_bytes": 6143990,
+      "sha256": "c8798b8abf8ae0a18e8c9952e7c7f75f3cc8465234b1b63f9e3ba3bebb9d5625"
+    },
+    {
+      "filename": "abdominal_ct_scan.mha",
+      "relative_path": "ct_mri/abdominal_ct_scan.mha",
+      "modality": "CT",
+      "mime_type": "application/octet-stream; modality=metaimage",
+      "size_bytes": 15204697,
+      "sha256": "a1526b57976dbe71db7b2ea3607abd147dab5b7622951ebc7c06a311c6a43a8f"
+    },
+    {
+      "filename": "brain_mri_t1.mha",
+      "relative_path": "ct_mri/brain_mri_t1.mha",
+      "modality": "MRI",
+      "mime_type": "application/octet-stream; modality=metaimage",
+      "size_bytes": 3408209,
+      "sha256": "b5de326cde5cf66c76a519e492b1d06596a7d3c853478397d491aa4c7210a591"
+    },
+    {
+      "filename": "mri_phantom_t2w.nii",
+      "relative_path": "ct_mri/mri_phantom_t2w.nii",
+      "modality": "MRI",
+      "mime_type": "application/octet-stream; modality=nifti",
+      "size_bytes": 11197792,
+      "sha256": "b4e51b7c43280b31a5bd7ea7850eca1ad9439913405d0fd205a1931a44c3ec71"
+    },
+    {
+      "filename": "neuro_mri_gray_t1.nrrd",
+      "relative_path": "ct_mri/neuro_mri_gray_t1.nrrd",
+      "modality": "MRI",
+      "mime_type": "application/octet-stream; modality=nrrd",
+      "size_bytes": 67390213,
+      "sha256": "330ad0b55c8468f8c16199002b43eed183b746703a197691d294a253048cb772"
+    },
+    {
+      "filename": "chest_digital_xray.dcm",
+      "relative_path": "xray/chest_digital_xray.dcm",
+      "modality": "XRAY",
+      "mime_type": "application/dicom",
+      "size_bytes": 34506,
+      "sha256": "4c8915904156503cd185d229303125d7477d763f06102307a3b222828f34503b"
+    },
+    {
+      "filename": "chest_xray_cardiomegaly.png",
+      "relative_path": "xray/chest_xray_cardiomegaly.png",
+      "modality": "XRAY",
+      "mime_type": "image/png",
+      "size_bytes": 828344,
+      "sha256": "dc2f77bbed41530c044c40173b6fd88f649dc1a59fecf51a368bb2ca56ff4b29"
+    },
+    {
+      "filename": "chest_xray_normal.png",
+      "relative_path": "xray/chest_xray_normal.png",
+      "modality": "XRAY",
+      "mime_type": "image/png",
+      "size_bytes": 750903,
+      "sha256": "d3ce5fb475b53f93357ce2c7ca2e9175f9e9aeb798d40becf804b39992428791"
+    },
+    {
+      "filename": "chest_xray_pa.png",
+      "relative_path": "xray/chest_xray_pa.png",
+      "modality": "XRAY",
+      "mime_type": "image/png",
+      "size_bytes": 773514,
+      "sha256": "9940e3268be37c4bd0dc50cd7e282365718bdd5c01d8d3beb7676411f94dca40"
+    },
+    {
+      "filename": "radiograph_sample.dcm",
+      "relative_path": "xray/radiograph_sample.dcm",
+      "modality": "XRAY",
+      "mime_type": "application/dicom",
+      "size_bytes": 312812,
+      "sha256": "aecedd1e04226f612fe99192b6af9b10c7dec15791243268e7a093968202ea86"
+    }
+  ]
+}

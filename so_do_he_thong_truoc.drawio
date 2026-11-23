@@ -1,0 +1,98 @@
+<mxfile host="65bd71144e">
+    <diagram id="KOOUL75VTNVXeE3B_KL6" name="Page-1">
+        <mxGraphModel dx="876" dy="958" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#CC0000;" value="HỆ THỐNG EHR TRƯỚC KHI BẢO MẬT (BASELINE B0)" vertex="1">
+                    <mxGeometry height="40" width="1000" x="200" y="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="zone_client" parent="1" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;" value="Tầng Người Dùng" vertex="1">
+                    <mxGeometry height="190" width="1200" x="80" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="doctor" parent="zone_client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="👨‍⚕️ Bác sĩ" vertex="1">
+                    <mxGeometry height="70" width="140" x="80" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="nurse" parent="zone_client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="👩‍⚕️ Điều dưỡng" vertex="1">
+                    <mxGeometry height="70" width="140" x="330" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="dba" parent="zone_client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" value="🖥️ DBA" vertex="1">
+                    <mxGeometry height="70" width="140" x="880" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="attacker" parent="zone_client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" value="☠️ Kẻ tấn công" vertex="1">
+                    <mxGeometry height="70" width="140" x="1050" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zone_app" parent="1" style="swimlane;startSize=30;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=13;" value="Tầng Ứng dụng  (Không có ABAC / KMS)" vertex="1">
+                    <mxGeometry height="160" width="1200" x="80" y="310" as="geometry"/>
+                </mxCell>
+                <mxCell id="appserver" parent="zone_app" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="🖥️ App Server&#xa;(Không xác thực trường)" vertex="1">
+                    <mxGeometry height="80" width="200" x="300" y="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="attack_abac" parent="zone_app" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;fontStyle=1;" value="🔴 Không ABAC&#xa;→ Mọi role đọc được tất cả" vertex="1">
+                    <mxGeometry height="60" width="220" x="560" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="attack_tenant" parent="zone_app" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;fontStyle=1;" value="🔴 Không phân tách Tenant&#xa;→ Cross-tenant leak" vertex="1">
+                    <mxGeometry height="60" width="220" x="820" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zone_db" parent="1" style="swimlane;startSize=30;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=13;" value="Tầng Cơ sở Dữ liệu  (Bản rõ – Plaintext)" vertex="1">
+                    <mxGeometry height="220" width="1200" x="80" y="510" as="geometry"/>
+                </mxCell>
+                <mxCell id="postgres" parent="zone_db" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="🗄️ PostgreSQL&#xa;patient_records (bản rõ)&#xa;diagnosis, medication, notes" vertex="1">
+                    <mxGeometry height="120" width="200" x="300" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="attack_dba" parent="zone_db" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;fontStyle=1;" value="🔴 DBA đọc bản rõ&#xa;SELECT * → lộ toàn bộ" vertex="1">
+                    <mxGeometry height="60" width="200" x="580" y="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="attack_snapshot" parent="zone_db" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;fontStyle=1;" value="🔴 Snapshot ổ đĩa&#xa;= Lộ toàn bộ dữ liệu" vertex="1">
+                    <mxGeometry height="60" width="200" x="820" y="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="attack_index" parent="zone_db" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;fontStyle=1;" value="🔴 Không Blind Index&#xa;→ Query lộ bản rõ" vertex="1">
+                    <mxGeometry height="60" width="200" x="580" y="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="attack_aad" parent="zone_db" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;fontStyle=1;" value="🔴 Không AAD Binding&#xa;→ Ciphertext swap" vertex="1">
+                    <mxGeometry height="60" width="200" x="820" y="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_doc_app" edge="1" parent="1" source="doctor" style="edgeStyle=orthogonalEdgeStyle;" target="appserver">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="230" y="400"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_nur_app" edge="1" parent="1" source="nurse" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="appserver">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_app_db" edge="1" parent="1" source="appserver" style="edgeStyle=orthogonalEdgeStyle;" target="postgres">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_dba_db" edge="1" parent="1" source="dba" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;fontColor=#b85450;fontStyle=1;dashed=0;endArrow=open;endFill=0;strokeWidth=3;" target="postgres" value="Direct SQL Access">
+                    <mxGeometry relative="1" x="-0.4889" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1030" y="230"/>
+                            <mxPoint x="120" y="230"/>
+                            <mxPoint x="120" y="660"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_att_db" edge="1" parent="1" source="attacker" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;fontColor=#b85450;fontStyle=1;dashed=1;endArrow=open;endFill=0;strokeWidth=3;" target="postgres" value="Snapshot Theft">
+                    <mxGeometry relative="1" x="-0.3569" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1200" y="250"/>
+                            <mxPoint x="160" y="250"/>
+                            <mxPoint x="160" y="620"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;" value="Chú thích" vertex="1">
+                    <mxGeometry height="30" width="120" x="80" y="745" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_red" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;" value="🔴 Điểm yếu / Véc-tơ tấn công" vertex="1">
+                    <mxGeometry height="35" width="260" x="80" y="780" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_red_arrow" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;" value="Đường kẻ đỏ = Truy cập tấn công trực tiếp" vertex="1">
+                    <mxGeometry height="35" width="300" x="360" y="780" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -48,6 +48,10 @@ CMakeCache.txt
 *.o
 *.obj
 *.so
+*.a
+/workers/he/native/
+/workers/he/bin/
+/workers/he/seal_bfv_engine
 *.dll
 *.exe
 
@@ -55,10 +59,13 @@ CMakeCache.txt
 /datasets/generated/
 /datasets/oracle/
 /datasets/raw/
+/datasets/samples/raw/*
+!/datasets/samples/raw/manifest.json
 /benchmarks/results/
 /analysis/output/
 /evidence/runs/
 /infra/runtime/
+/workers/abe/reference/
 *.dump
 *.sql.gz
 *.sqlite

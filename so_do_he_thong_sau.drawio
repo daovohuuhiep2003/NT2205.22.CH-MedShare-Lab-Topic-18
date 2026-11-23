@@ -1,0 +1,162 @@
+<mxfile host="65bd71144e">
+    <diagram id="mdIWMvkLlvPJ7PrvEKJC" name="Page-1">
+        <mxGraphModel dx="727" dy="795" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#007700;" value="HỆ THỐNG EHR SAU KHI BẢO MẬT (PROFILE P1 – MedShare-Lab)" vertex="1">
+                    <mxGeometry height="40" width="1200" x="150" y="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="z0" parent="1" style="swimlane;startSize=35;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;" value="Zone Z0 – Internet / Client" vertex="1">
+                    <mxGeometry height="150" width="1400" x="60" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="doctor" parent="z0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="👨‍⚕️ Bác sĩ" vertex="1">
+                    <mxGeometry height="65" width="130" x="60" y="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="nurse" parent="z0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="👩‍⚕️ Điều dưỡng" vertex="1">
+                    <mxGeometry height="65" width="130" x="220" y="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="dba_blocked" parent="z0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontStyle=2;" value="🖥️ DBA&#xa;(Bị chặn bởi Z1)" vertex="1">
+                    <mxGeometry height="65" width="150" x="1200" y="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="z1" parent="1" style="swimlane;startSize=35;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;" value="Zone Z1 – Trusted Application Layer  (Kiểm soát bởi Bệnh viện)" vertex="1">
+                    <mxGeometry height="250" width="1400" x="60" y="270" as="geometry"/>
+                </mxCell>
+                <mxCell id="api_gw" parent="z1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="🔒 API Gateway&#xa;mTLS / JWT Auth" vertex="1">
+                    <mxGeometry height="80" width="160" x="60" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="abac" parent="z1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;" value="🛡️ ABAC PDP&#xa;Role + Dept + Tenant&#xa;Deny-by-default" vertex="1">
+                    <mxGeometry height="100" width="170" x="280" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="key_broker" parent="z1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;" value="🔑 Key Broker&#xa;Wrap / Unwrap DEK&#xa;(AES-256-GCM)" vertex="1">
+                    <mxGeometry height="100" width="170" x="510" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="vault" parent="z1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;" value="🏦 HashiCorp Vault&#xa;Transit KMS&#xa;KEK Rotation" vertex="1">
+                    <mxGeometry height="100" width="170" x="740" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="blind_engine" parent="z1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="🔍 Blind Index Engine&#xa;HKDF + HMAC-SHA256&#xa;(Search Token)" vertex="1">
+                    <mxGeometry height="100" width="170" x="970" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="breakglass" parent="z1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="🚨 Break-Glass&#xa;Ticket + Expiry&#xa;+ Audit Trail" vertex="1">
+                    <mxGeometry height="90" width="150" x="1200" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="g1" parent="z1" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="🟢 ABAC" vertex="1">
+                    <mxGeometry height="25" width="80" x="280" y="175" as="geometry"/>
+                </mxCell>
+                <mxCell id="g2" parent="z1" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="🟢 Vault KMS" vertex="1">
+                    <mxGeometry height="25" width="100" x="740" y="175" as="geometry"/>
+                </mxCell>
+                <mxCell id="g3" parent="z1" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="🟢 Blind Index" vertex="1">
+                    <mxGeometry height="25" width="100" x="970" y="175" as="geometry"/>
+                </mxCell>
+                <mxCell id="z2" parent="1" style="swimlane;startSize=35;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=13;" value="Zone Z2 – Cloud DBMS  (Bán tin cậy – Chỉ thấy Ciphertext)" vertex="1">
+                    <mxGeometry height="220" width="1200" x="60" y="570" as="geometry"/>
+                </mxCell>
+                <mxCell id="postgres" parent="z2" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="🗄️ PostgreSQL 16&#xa;Encrypted EHR Fields&#xa;RLS per Tenant" vertex="1">
+                    <mxGeometry height="130" width="200" x="120" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="capsule" parent="z2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="🔐 Capsule Store&#xa;Wrapped DEK&#xa;(per record)" vertex="1">
+                    <mxGeometry height="100" width="160" x="380" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="search_idx" parent="z2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="🔍 search_index&#xa;blind_token (HMAC)&#xa;Không có bản rõ" vertex="1">
+                    <mxGeometry height="100" width="160" x="600" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="mongodb" parent="z2" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="🗄️ MongoDB 7.0&#xa;Encrypted Docs&#xa;(semi-structured)" vertex="1">
+                    <mxGeometry height="130" width="200" x="830" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="g4" parent="z2" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="🟢 AES-256-GCM + AAD" vertex="1">
+                    <mxGeometry height="25" width="200" x="120" y="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="g5" parent="z2" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="🟢 DBA chỉ thấy ciphertext" vertex="1">
+                    <mxGeometry height="25" width="200" x="380" y="175" as="geometry"/>
+                </mxCell>
+                <mxCell id="z3" parent="1" style="swimlane;startSize=35;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=13;" value="Zone Z3 – Audit Log (Immutable)" vertex="1">
+                    <mxGeometry height="220" width="220" x="1280" y="570" as="geometry"/>
+                </mxCell>
+                <mxCell id="audit" parent="z3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="📋 Audit Log&#xa;Metadata Only&#xa;actor + action + ts&#xa;(Không có bản rõ)" vertex="1">
+                    <mxGeometry height="120" width="180" x="20" y="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="g6" parent="z3" style="text;html=1;strokeColor=#9673a6;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="🟢 Audit Trail" vertex="1">
+                    <mxGeometry height="25" width="100" x="60" y="175" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_doc_gw" edge="1" parent="1" source="doctor" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;fontColor=#6c8ebf;fontSize=10;" target="api_gw" value="HTTPS/mTLS">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="185" y="300"/>
+                            <mxPoint x="185" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_nur_gw" edge="1" parent="1" source="nurse" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;" target="api_gw">
+                    <mxGeometry relative="1" x="0.1608" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="345" y="290"/>
+                            <mxPoint x="240" y="290"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gw_abac" edge="1" parent="1" source="api_gw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" target="abac">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_abac_kb" edge="1" parent="1" source="abac" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" target="key_broker">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_kb_vault" edge="1" parent="1" source="key_broker" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;fontColor=#007700;fontSize=10;" target="vault" value="Wrap/Unwrap DEK">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_kb_blind" edge="1" parent="1" source="key_broker" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" target="blind_engine">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_kb_pg" edge="1" parent="1" source="key_broker" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#d6b656;fontColor=#996600;fontSize=10;fontStyle=1;" target="postgres" value="Ciphertext + Capsule">
+                    <mxGeometry relative="1" x="0.069" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="655" y="500"/>
+                            <mxPoint x="280" y="500"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_blind_idx" edge="1" parent="1" source="blind_engine" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#d6b656;fontColor=#996600;fontSize=10;" target="search_idx" value="blind_token">
+                    <mxGeometry relative="1" x="0.2156" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1230" y="390"/>
+                            <mxPoint x="1230" y="770"/>
+                            <mxPoint x="740" y="770"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_z1_z3" edge="1" parent="1" source="api_gw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;fontColor=#7B00B7;fontSize=10;" target="audit" value="Audit Event">
+                    <mxGeometry relative="1" x="-0.1824" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="200" y="480"/>
+                            <mxPoint x="1560" y="480"/>
+                            <mxPoint x="1560" y="690"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_dba_block" edge="1" parent="1" source="dba_blocked" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;fontColor=#b85450;fontStyle=1;dashed=1;fontSize=11;" target="api_gw" value="❌ Bị từ chối">
+                    <mxGeometry relative="1" x="0.0166" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1335" y="250"/>
+                            <mxPoint x="220" y="250"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="leg_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;" value="Chú thích" vertex="1">
+                    <mxGeometry height="30" width="120" x="60" y="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_green" parent="1" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;" value="🟢 Cơ chế bảo mật đang hoạt động" vertex="1">
+                    <mxGeometry height="35" width="270" x="60" y="855" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_red" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;" value="❌ Truy cập bị từ chối / Bị chặn" vertex="1">
+                    <mxGeometry height="35" width="260" x="360" y="855" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_yellow" parent="1" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;" value="Zone Z2 = Chỉ chứa ciphertext (không có khóa)" vertex="1">
+                    <mxGeometry height="35" width="340" x="650" y="855" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_purple" parent="1" style="text;html=1;strokeColor=#9673a6;fillColor=#e1d5e7;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;" value="Zone Z3 = Immutable Audit (metadata only)" vertex="1">
+                    <mxGeometry height="35" width="310" x="1020" y="855" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
