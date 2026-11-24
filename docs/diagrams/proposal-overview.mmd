@@ -12,7 +12,7 @@ flowchart TB
     B --> V
   end
   U -->|"F1 TLS and identity"| G
-  G -->|"F3 write / F4 equality / F5 reject unsupported"| D["Cloud SQL or NoSQL - ciphertext / token index / F7 backup"]
+  G -->|"F3 write / F4 equality / F5 reject unsupported"| D["Cloud MongoDB + MinIO - ciphertext / token index / F7 backup"]
   G -->|"F9 filtered metadata"| A["Independent audit / signed checkpoint / external witness"]
   B --> A
   P --> A

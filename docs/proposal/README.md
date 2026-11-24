@@ -1,6 +1,6 @@
 # Proposal — nguồn chuẩn và bản xuất
 
-- **Nguồn chuẩn:** [project-proposal.md](project-proposal.md).
+- **Nguồn chuẩn:** [project-proposal.md](project-proposal.md) — bản 1.2 (23/11/2026). Bản đăng ký 1.1 (16/09/2026) có trong lịch sử Git; thay đổi liệt kê ở Phụ lục B.
 - **Bản Word:** [project-proposal.docx](project-proposal.docx), sinh từ Markdown.
 - Render tại root: `python -B scripts/render_proposal.py`.
 - Kiểm tra không ghi file: `python -B scripts/render_proposal.py --check` và `python -B scripts/validate_proposal_sync.py`.

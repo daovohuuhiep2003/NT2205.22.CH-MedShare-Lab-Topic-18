@@ -16,5 +16,5 @@ Giữ cả hai DBMS (tốn công, không thêm insight bảo mật chính); ch�
 
 ## Ảnh hưởng
 - Mất phần so sánh SQL vs NoSQL và kiểm thử RLS trong E1/E2/TC-27; TC-27 được kiểm chứng ở Broker PEP thay cho RLS.
-- Proposal (nguồn đã đăng ký) vẫn ghi "PostgreSQL và MongoDB"; báo cáo cuối phải nêu thay đổi này.
+- Proposal đã cập nhật lên bản 1.2 (Phụ lục B). Yêu cầu Master "comparison SQL vs NoSQL" chuyển thành phân tích kiến trúc Pattern A–D, không có số đo PostgreSQL — **cần giảng viên phê duyệt**.
 - `docs/development/environment-setup.md`, `MUC_LUC_DU_AN.md`, `implementation-plan.md` §8.1 đã cập nhật.

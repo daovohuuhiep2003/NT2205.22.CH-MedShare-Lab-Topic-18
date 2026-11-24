@@ -143,7 +143,7 @@ def validate(root):
         if forbidden in text:
             errors.append('Stale scope or individual assignment: ' + forbidden)
     reference_ids = re.findall(r'^\[(G|T|\d+)\] \[', text, re.M)
-    if set(reference_ids) != {'G', 'T', *(str(i) for i in range(1, 16))}:
+    if set(reference_ids) != {'G', 'T', *(str(i) for i in range(1, 17))}:
         errors.append('Incomplete reference IDs')
     if chr(65533) in text:
         errors.append('Unicode replacement character')

@@ -15,4 +15,4 @@ M-07 ghi "Candidate BSW07, exact scheme/backend/parameters được pin sau spik
 ## Ảnh hưởng
 - Không claim mức an toàn 128-bit cho SS512; không claim CCA hay PQ cho CP-ABE.
 - Thu hồi theo epoch (TC-13) PASS; dữ liệu đã giải mã offline không thu hồi được (TC-14 = LIMIT).
-- Proposal vẫn nêu BSW07 là ứng viên; báo cáo cuối dẫn ADR này.
+- Proposal bản 1.2 đã ghi AC17 (mục 7.4, tham khảo [16] Agrawal–Chase CCS 2017); BSW07 [3] giữ làm tài liệu nền.

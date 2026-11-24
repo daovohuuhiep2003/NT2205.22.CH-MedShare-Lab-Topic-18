@@ -6,6 +6,7 @@
 - `PYTHONPATH=src:. .venv/bin/python -m pytest tests/ -q`: **100 passed** trên lab đang chạy (MongoDB, Vault, MinIO, abe-worker). Lần đầu thất bại ở collection `tests/unit/test_portal_api.py` vì Vault dev mode mất Transit sau restart; đã sửa bằng [ADR-0003](../adr/0003-vault-persistent-lab-unseal.md) và kiểm chứng KEK còn sau `docker restart`.
 - Sửa thêm: healthcheck MinIO (dùng `wget` thay `curl`), script ingest ghi đúng DB `medshare_db`.
 - `validate_docs.py` chỉ kiểm tra link tới file được track: các báo cáo trong `benchmarks/results/` và `evidence/runs/` bị gitignore nên tài liệu ghi chúng dạng đường dẫn text, không dạng link.
+- Proposal nâng lên **bản 1.2** (MongoDB + MinIO, AC17, Vault, lịch tuần 10–11, thêm tham khảo [16], Phụ lục B). DOCX sinh lại bằng renderer; `validate_proposal_sync.py` khớp 216/216 đơn vị nội dung, 12 bảng, 2 hình, 18 mục tham khảo (validator nới từ 15 lên 16 tài liệu đánh số). Hình 1 PNG được sửa nhãn "Cloud PostgreSQL / MongoDB" thành "Cloud MongoDB 7.0 + MinIO". Chưa kiểm tra phân trang trong Word.
 - CI vẫn chỉ chạy tooling checks; unit/security tests cần lab nên chạy thủ công. Mục bên dưới là bản ghi lần tái cấu trúc 16/09/2026, giữ nguyên làm lịch sử.
 
 ## Bản ghi 16/09/2026

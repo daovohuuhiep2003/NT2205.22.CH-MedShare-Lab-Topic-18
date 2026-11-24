@@ -10,17 +10,17 @@
 
 **Thành viên:** Nguyễn Đạo Ga Đô — 26848038; Đào Võ Hữu Hiệp — 26848065.
 
-**Phiên bản:** 1.1 — hoàn thiện hồ sơ đăng ký ngày 16/09/2026.
+**Phiên bản:** 1.2 — cập nhật ngày 23/11/2026 theo các quyết định kỹ thuật sau feasibility và triển khai (bản đăng ký 1.1 ngày 16/09/2026). Danh sách thay đổi tại Phụ lục B.
 
 **Tính chất:** Nghiên cứu thực nghiệm kết hợp xây dựng prototype; không xây dựng DBMS mới, không đề xuất primitive mật mã mới.
 
-Đây là proposal đăng ký: mục tiêu, kiểm thử và sản phẩm dưới đây là kế hoạch cần thực hiện, chưa phải kết quả đạt được. Phạm vi đề nghị phê duyệt là các cấu hình E1–E5, E7–E9 tại mục 8; phân công cụ thể được quản lý trong kế hoạch triển khai riêng.
+Đây là proposal đăng ký: mục tiêu, kiểm thử và sản phẩm dưới đây là kế hoạch và phạm vi cam kết, không phải báo cáo kết quả. Phạm vi đề nghị phê duyệt là các cấu hình E1–E5, E7–E9 tại mục 8; phân công cụ thể được quản lý trong kế hoạch triển khai riêng. Bản 1.2 điều chỉnh nền tảng lưu trữ, scheme CP-ABE, KMS và lịch; các điều chỉnh làm thay đổi nghĩa vụ Master được nêu rõ để giảng viên phê duyệt.
 
 ## Tóm tắt đề xuất
 
 Các cơ sở y tế sử dụng Cloud DBMS cần vừa khai thác hồ sơ, vừa hạn chế việc đọc dữ liệu ngoài thẩm quyền. Mã hóa lưu trữ thông thường chỉ giải quyết một phần bài toán: DBMS đang hoạt động vẫn có thể trả plaintext cho tài khoản đặc quyền; kiểm soát ở ứng dụng có thể bị bỏ qua bởi truy vấn trực tiếp; tìm kiếm trên dữ liệu mã hóa có thể làm lộ phân bố và mẫu truy cập. Chia sẻ dữ liệu cho nhiều người nhận, thu hồi quyền và bảo vệ bí mật dài hạn làm phát sinh thêm yêu cầu về khóa và chính sách.
 
-Đề tài chọn hệ thống hồ sơ y tế đa tenant dùng dữ liệu tổng hợp làm trường hợp nghiên cứu. Bắt đầu từ nghiệp vụ và truy vấn, đề tài xác định tài sản, threat model và yêu cầu bảo mật; đặt ranh giới tin cậy và cơ chế kiểm soát; sau đó mới suy ra yêu cầu mật mã, lựa chọn cơ chế và thực nghiệm. PostgreSQL và MongoDB được đối chiếu trên một mô hình dữ liệu logic, cùng workload và bộ đo. Phần lõi bảo vệ field ở miền tổ chức tin cậy, quản lý khóa ngoài DB và kiểm soát truy cập thuộc tính. Các nhánh thực nghiệm độc lập đánh giá tìm kiếm equality với explicit leakage profile, chia sẻ CP-ABE, phép tổng BFV và chuyển đổi key/signature path theo chuẩn PQC.
+Đề tài chọn hệ thống hồ sơ y tế đa tenant dùng dữ liệu tổng hợp làm trường hợp nghiên cứu. Bắt đầu từ nghiệp vụ và truy vấn, đề tài xác định tài sản, threat model và yêu cầu bảo mật; đặt ranh giới tin cậy và cơ chế kiểm soát; sau đó mới suy ra yêu cầu mật mã, lựa chọn cơ chế và thực nghiệm. Prototype dùng MongoDB 7.0 cho hồ sơ dạng document và MinIO (S3) cho tệp y tế nhị phân, cùng một mô hình dữ liệu logic, workload và bộ đo; so sánh SQL/NoSQL được thực hiện ở mức phân tích kiến trúc (mục 8.1). Phần lõi bảo vệ field ở miền tổ chức tin cậy, quản lý khóa ngoài DB và kiểm soát truy cập thuộc tính. Các nhánh thực nghiệm độc lập đánh giá tìm kiếm equality với explicit leakage profile, chia sẻ CP-ABE, phép tổng BFV và chuyển đổi key/signature path theo chuẩn PQC.
 
 Kết quả kỳ vọng không phải tuyên bố một hệ thống “an toàn tuyệt đối”, mà là bộ bằng chứng cho biết cấu hình nào bảo vệ tài sản nào, trước đối thủ nào, với giả định, rò rỉ, chi phí và giới hạn nào.
 
@@ -38,7 +38,7 @@ Nghiệp vụ gồm tạo/cập nhật hồ sơ, tra cứu theo mã bản ghi, l
 
 - Miền tổ chức tin cậy: Identity Provider, nguồn thuộc tính, Trusted Crypto Gateway, PDP, key broker/KMS, registry phiên bản, data owner. Gateway nhìn thấy plaintext; đây là service-side encryption ở ngoài miền quản trị Cloud DB, không phải end-to-end encryption chống gateway.
 
-- Miền cloud: PostgreSQL hoặc MongoDB, chỉ mục tìm kiếm, backup/replica và worker tính tổng. Đối thủ có thể đọc/sửa/copy dữ liệu trong miền này; không mặc nhiên có khóa tại miền tổ chức.
+- Miền cloud: MongoDB 7.0, MinIO object storage, chỉ mục tìm kiếm, backup/replica và worker tính tổng. Đối thủ có thể đọc/sửa/copy dữ liệu trong miền này; không mặc nhiên có khóa tại miền tổ chức.
 
 - Miền người nhận: endpoint giữ attribute key hoặc private key; được tin cậy bảo vệ khóa. Không thể thu hồi plaintext đã được người nhận hợp lệ lưu lại.
 
@@ -72,7 +72,7 @@ Phân tích phụ thuộc sẽ chỉ ra các đường lan truyền: lộ tenant
 | amount_units | SUM/count trên cohort đã duyệt | P1 lưu AES-GCM; P3 tạo snapshot BFV riêng. Không cung cấp encrypted WHERE/range/join. |
 | policy/crypto metadata | Cấp quyền, version, suite/key ID | Nguồn thuộc tính tin cậy, chữ ký/registry và AAD phù hợp; không tin label từ DB đơn độc. |
 
-Không đưa PII hoặc tên bệnh vào AAD, tên khóa, log hay nhãn chính sách công khai. Cùng schema logic và query semantics được dùng trên SQL/NoSQL; khóa mật mã sinh ngẫu nhiên độc lập với seed của dữ liệu tổng hợp.
+Không đưa PII hoặc tên bệnh vào AAD, tên khóa, log hay nhãn chính sách công khai. Schema logic và query semantics được cố định trước khi đo; tệp nhị phân được mã hóa chunked AES-256-GCM trước khi lưu MinIO, MongoDB chỉ giữ metadata. Khóa mật mã sinh ngẫu nhiên độc lập với seed của dữ liệu tổng hợp.
 
 ## 3. Threat Model — Đối thủ và kịch bản
 
@@ -80,7 +80,7 @@ Không đưa PII hoặc tên bệnh vào AAD, tên khóa, log hay nhãn chính s
 |---|---|---|
 | Kẻ lấy snapshot | Copy file/backup, biết schema và phần mềm; không có KMS key | Đọc hồ sơ từ bản sao offline |
 | Người dùng trái quyền | Có tài khoản, điều khiển request và context tự khai | Sai tenant/role/purpose, export trái phép, tự bật emergency |
-| DBA/cloud operator | Query trực tiếp, đọc/sửa ciphertext/index, có thể bỏ qua DB policy | Bypass API/RLS, tráo field/tenant, sửa metadata |
+| DBA/cloud operator | Query trực tiếp, đọc/sửa ciphertext/index, có thể bỏ qua DB policy | Bypass API/DB role, tráo field/tenant, sửa metadata |
 | Đối thủ active network/storage | Nghe lén, sửa, replay, thay khóa công khai, đưa input lỗi | MITM, forged policy, replay capsule, downgrade |
 | Người nhận bị thu hồi/cấu kết | Giữ ciphertext cũ, khóa riêng của từng người không đủ quyền | Ghép thành phần ABE key, tiếp tục đọc sau revocation |
 | Quan sát viên truy vấn | Biết phân bố từ nguồn phụ, thấy token và access trace | Suy luận giá trị từ frequency/search/access pattern |
@@ -148,9 +148,9 @@ Mục tiêu cho primitive chuẩn: bảo mật cổ điển tối thiểu khoả
 |---|---|---|
 | Encrypted volume baseline | So sánh stolen-volume threat với DB đang chạy | Không chống DBA; không gọi volume là TDE engine |
 | AES-256-GCM + envelope + KMS [2] | Bảo vệ field, DEK tách tenant/context; key lifecycle | Không tự thực thi ABAC hoặc searchable SQL |
-| ABAC/PDP/PEP, SQL RLS bổ trợ [1], [13] | Ngữ nghĩa subject/object/action/environment và kiểm tra bypass | RLS không chống superuser |
-| HMAC-SHA-256 blind index [4] | Equality search dễ tái lập trên cả SQL/NoSQL, đo leakage rõ | Không phải MongoDB QE, không forward-private SSE |
-| CP-ABE KEM/DEM research [3], [11] | Chia sẻ một-nhiều bằng thuộc tính, bọc share DEK | Không mã hóa bulk bằng pairing; không tự thu hồi dữ liệu cũ |
+| ABAC/PDP/PEP, MongoDB scoped role bổ trợ [1], [13] | Ngữ nghĩa subject/object/action/environment và kiểm tra bypass | DB role không chống DBA có quyền root |
+| HMAC-SHA-256 blind index [4] | Equality search tái lập được trên SQL lẫn NoSQL, đo leakage rõ | Không phải MongoDB QE, không forward-private SSE |
+| CP-ABE AC17 KEM/DEM [3], [11], [16] | Chia sẻ một-nhiều bằng thuộc tính, bọc share DEK | Không mã hóa bulk bằng pairing; không tự thu hồi dữ liệu cũ |
 | SEAL BFV [5] | Một phép SUM/count trên số nguyên, không cần TEE hardware | Không phải arbitrary encrypted SQL, không proof of correct computation |
 | ML-KEM-768 + HKDF + AEAD; ML-DSA-65 [6]–[8] | Archive/key capsule và policy/checkpoint có xác thực; đo migration | Không phải production-certified module hay toàn hệ thống PQ-safe |
 
@@ -175,9 +175,9 @@ SSE trong [4] là căn cứ về mô hình và tiêu chí đối chiếu, không
 
 ### 7.4 Candidate và baseline cần khóa sau feasibility spike
 
-CP-ABE: candidate BSW07 qua Charm CPabe_BSW07 [3], [11]; OpenABE chỉ là lựa chọn thay thế nếu chốt lại exact scheme/security model. Ghi backend, group, serialization và tham số; không dùng default SS512 làm chứng cứ đạt 128-bit. Prototype bọc share DEK qua KEM/DEM với KDF và AEAD; test collusion không thay security proof.
+CP-ABE: sau feasibility spike, chốt scheme **AC17** (Agrawal–Chase, FAME [16]) qua Charm-Crypto [11] thay cho candidate BSW07 [3] ban đầu, vì tái sử dụng được mã nguồn đã đánh giá của nhóm và hỗ trợ nhóm ghép cặp Type-3. Đường cong BN254 dùng cho kết quả chính; SS512 (~80-bit) chỉ để so sánh, không dùng làm chứng cứ đạt 128-bit. Prototype bọc share DEK qua KEM/DEM với HKDF-SHA-256 (ngữ cảnh tenant, epoch, policy hash) và AES-256-GCM; test collusion không thay security proof.
 
-BFV: Microsoft SEAL [5], candidate polynomial degree 8192 và security profile 128-bit do thư viện kiểm tra. amount_units là số nguyên 0–1000, cohort tối đa 10.000; chọn plaintext modulus t lớn hơn 10.000.000 và đáp ứng điều kiện batching, đồng thời kiểm tra noise budget. SUM được so với oracle số nguyên; count không được coi là bí mật khi kích thước cohort đã lộ.
+BFV: Microsoft SEAL [5], candidate polynomial degree 8192 và security profile 128-bit do thư viện kiểm tra. amount_units là số nguyên 0–1000, cohort tối đa 10.000; chọn plaintext modulus t lớn hơn 10.000.000 và đáp ứng điều kiện batching (đã chốt prime batching 30-bit), đồng thời kiểm tra noise budget. SUM được so với oracle số nguyên; count không được coi là bí mật khi kích thước cohort đã lộ.
 
 PQC: ML-KEM-768 + HKDF + AEAD bảo vệ archive DEK độc lập; ML-DSA-65 ký descriptor/manifest/policy/checkpoint [6]–[8]. Baseline dự kiến là RSA-3072 OAEP/SHA-256 để bọc DEK và Ed25519 cho chữ ký; không gọi RSA-OAEP là KEM tương đương hình thức hoặc coi các parameter set có mức an toàn bằng nhau. Khóa baseline trước benchmark; báo riêng thời gian, raw/wire bytes và giả định an toàn.
 
@@ -190,21 +190,21 @@ Key-only rewrap giữ ciphertext/AAD khi DEK không đổi, nhưng không khắc
 | ID | Cấu hình/thí nghiệm | Bằng chứng chính |
 |---|---|---|
 | E1 | B0 plaintext vs B1 encrypted lab volume | Latency/QPS, stolen snapshot, restore; phân biệt volume với logical dump |
-| E2 | P1 field envelope trên PostgreSQL và MongoDB | Round-trip, exposure boundary, key cost/storage overhead |
-| E3 | P1 ABAC, broker PEP, SQL RLS bổ trợ | Permit/deny và direct-query bypass, field projection |
+| E2 | P1 field envelope + Vault KMS trên MongoDB | Round-trip, exposure boundary, key cost/storage overhead |
+| E3 | P1 ABAC, broker PEP, break-glass | Permit/deny và direct-query bypass, field projection |
 | E4 | P2 CP-ABE share capsule | Policy complexity, key/ciphertext size, collusion tests |
 | E5 | P1 equality blind index — phạm vi đề nghị tại mục 7.3 | Correctness, search cost, leakage catalogue và inference |
 | E7 | P3 BFV SUM/count | Exact result, compute/storage expansion và trust gap |
 | E8 | P4 PQC key/signature path | Đối chiếu baseline cổ điển; sizes/times, auth binding, algorithm negotiation |
 | E9 | Cross-cutting rotation/revocation | Downtime, rows touched, stale failure, residual decryptability |
 
-Giữ mã E theo Topic 18; không thực hiện E6 TEE. Có 8 experiments, ít nhất ba hướng bảo vệ khác logic ngoài baseline; E4/E7 đáp ứng nhánh nâng cao và E8/E9 đáp ứng PQC/crypto-agility. So sánh SQL/NoSQL tập trung vào B0/P1 thay vì nhân toàn bộ tổ hợp lên mọi DB. Theo [T, mục 12], BFV đáp ứng lựa chọn HE/FHE thay TEE, còn E8/E9 đáp ứng lựa chọn crypto-agile PQ migration; đủ số experiment không thay thế nghĩa vụ định tính Master.
+Giữ mã E theo Topic 18; không thực hiện E6 TEE. Có 8 experiments, ít nhất ba hướng bảo vệ khác logic ngoài baseline; E4/E7 đáp ứng nhánh nâng cao và E8/E9 đáp ứng PQC/crypto-agility. So sánh SQL/NoSQL được điều chỉnh thành phân tích kiến trúc có đối chiếu: Pattern A–D theo [T, mục 6] (RLS và Always Encrypted phía SQL [10]; scoped role và Queryable Encryption phía MongoDB [9], [13]) so với giới hạn đã đo được trên MongoDB ở E1–E3; không có số đo hiệu năng PostgreSQL. Đây là điều chỉnh so với yêu cầu Master “comparison SQL vs NoSQL” và cần giảng viên phê duyệt. Theo [T, mục 12], BFV đáp ứng lựa chọn HE/FHE thay TEE, còn E8/E9 đáp ứng lựa chọn crypto-agile PQ migration; đủ số experiment không thay thế nghĩa vụ định tính Master.
 
 ### 8.2 Phạm vi dữ liệu và tính khả thi
 
-Dữ liệu tổng hợp 3 tenant; các mức 1.000, 10.000 và 100.000 hồ sơ. Main benchmark dùng 10.000; 100.000 là scale-up nếu RAM hoặc disk cho phép. HE/ABE dùng subset riêng để đo chi phí đúng bản chất, không tạo hàng trăm nghìn ABE/HE ciphertext không cần thiết. Dữ liệu phải có phân bố uniform và skew để nghiên cứu leakage.
+Dữ liệu tổng hợp 2 tenant (hai bệnh viện, tỷ lệ 60/40); các mức 1.000, 10.000 và 100.000 hồ sơ. Main benchmark dùng 10.000; 100.000 là scale-up nếu RAM hoặc disk cho phép. HE/ABE dùng subset riêng để đo chi phí đúng bản chất, không tạo hàng trăm nghìn ABE/HE ciphertext không cần thiết. Dữ liệu phải có phân bố uniform và skew để nghiên cứu leakage.
 
-Core P1 chạy trên cả PostgreSQL và MongoDB. ABE/HE/PQC là worker hoặc CLI hẹp, không phải ba ứng dụng mới; các profile dùng subset và workload riêng được khai báo để tránh so sánh sai đơn vị đo.
+Core P1 chạy trên MongoDB 7.0; tệp y tế mẫu (X-quang, CT/MRI, siêu âm, PDF) lấy từ nguồn công khai đã khử định danh và lưu MinIO dưới dạng ciphertext. ABE/HE/PQC là worker hoặc CLI hẹp, không phải ba ứng dụng mới; các profile dùng subset và workload riêng được khai báo để tránh so sánh sai đơn vị đo.
 
 ### 8.3 Nguồn lực và mốc khả thi
 
@@ -212,7 +212,7 @@ Core P1 chạy trên cả PostgreSQL và MongoDB. ABE/HE/PQC là worker hoặc C
 |---|---|
 | Nhân lực / thời gian | Nhóm 2 học viên, 12 tuần. Quỹ công sức dự trù cho toàn nhóm khoảng 36–44 giờ/tuần (432–528 giờ); đây là giả định lập kế hoạch, cần chốt trong plan chi tiết, không phải số giờ đã xác nhận. |
 | Máy lab | Đề xuất 8 logical CPU, 32 GB RAM và khoảng 60 GB đĩa lab. Với 16 GB RAM: chạy tuần tự, giữ 10.000 record chính; 100.000 chỉ là scale-up tùy chọn. |
-| Hệ điều hành / runtime | Ubuntu Server trên VM hoặc máy lab; Docker Compose; PostgreSQL/MongoDB; Python gateway/test harness; OPA hoặc PDP tương đương; software KMS; isolated ABE/PQC và SEAL BFV workers. |
+| Hệ điều hành / runtime | Ubuntu 22.04/24.04; Docker Compose; MongoDB 7.0 và MinIO; Python 3.12 FastAPI gateway/test harness; PDP ABAC viết bằng Python; HashiCorp Vault Transit làm software KMS (file storage bền vững); container riêng cho CP-ABE (Charm AC17), SEAL BFV và liboqs. |
 | Feasibility gate tuần 1–2 | Build và chạy smoke test ABE/HE/PQC; kiểm tra tham số, serialization, round-trip và negative input; chốt E5, baseline E8, dependency versions, tài nguyên và ranh giới lab trước khi tích hợp. |
 
 Không cam kết API hoặc khả năng build chưa thử; phiên bản được pin sau feasibility gate. Không dùng cloud production, dữ liệu y tế thật hoặc khóa production để benchmark. Phân công từng thành viên được bổ sung trong kế hoạch triển khai riêng, không thuộc nội dung proposal này.
@@ -251,7 +251,7 @@ Các điều kiện dưới đây áp dụng khi nghiệm thu đồ án cuối k
 
 1. Có đủ A1–A10 của guideline và 10 phase trong báo cáo; từng threat quan trọng có SR → CR/control → implementation → test → evidence.
 
-2. Thực hiện các yêu cầu Master đã chọn: SQL/NoSQL, CP-ABE/revocation, leakage/inference, BFV và PQ migration; không chỉ đạt ngưỡng số experiment.
+2. Thực hiện các yêu cầu Master đã chọn: so sánh SQL/NoSQL ở mức phân tích kiến trúc (mục 8.1), CP-ABE/revocation, leakage/inference, BFV và PQ migration; không chỉ đạt ngưỡng số experiment.
 
 3. Không false permit trong bộ test đã công bố; unsupported query bị từ chối; negative tests thuộc claim phải đạt. Test không chứng minh an toàn với mọi input.
 
@@ -267,18 +267,18 @@ Các điều kiện dưới đây áp dụng khi nghiệm thu đồ án cuối k
 |---|---|---|
 | 1–2 | System/assets/threat/SR; thử build ABE/HE/PQC; schema và oracle | Scope/E5/baseline E8, trust model, dependency feasibility và parameter profile chốt |
 | 3 | B0/B1, dữ liệu synthetic, benchmark harness | E1 chạy tái lập, baseline semantics thống nhất |
-| 4–5 | Field envelope, KMS/broker, manifest/nonce/lifecycle | E2, tampering/backup tests; P1 trên SQL/NoSQL |
-| 6 | ABAC, context source, RLS bổ trợ, direct bypass | E3 và quyền field đúng |
+| 4–5 | Field envelope, KMS/broker, manifest/nonce/lifecycle; MinIO cho tệp nhị phân | E2, tampering/backup tests; P1 trên MongoDB |
+| 6 | ABAC, context source, break-glass, direct bypass | E3 và quyền field đúng |
 | 7 | Equality index và leakage/inference | E5, support/leakage matrix |
 | 8 | BFV SUM/count | E7 exactness và trust-gap evidence |
 | 9 | CP-ABE share, collusion và epoch | E4, phần ABE của E9 |
-| 10 | ML-KEM/ML-DSA, versioned migration | E8/E9, downgrade/crash tests |
-| 11 | Re-test, fault injection, thống kê và sensitivity | Raw data/CI, traceability cập nhật |
+| 10 | Web portal demo đa vai trò (TLS, đăng nhập, ABAC field projection, CP-ABE export, BFV SUM, DBA ciphertext view) | Luồng end-to-end chạy được trên dữ liệu synthetic |
+| 11 | ML-KEM/ML-DSA, versioned migration; re-test, fault injection, thống kê | E8/E9, downgrade/crash tests; raw data/CI, traceability cập nhật |
 | 12 | Report, review claim, demo và gói tái lập | A1–A10, report, slides, video hoặc live demo |
 
-Rủi ro lớn nhất là build thư viện nghiên cứu, độ rộng đề tài và khác biệt môi trường DB. Biện pháp đề xuất: spike sớm; giữ một query equality và một aggregate; tách worker/runtime; không làm UI/Kubernetes/TEE; giảm kích thước và số mức scale trước khi giảm nghĩa vụ Master. Nếu một nhánh bắt buộc không khả thi, ghi mốc chặn và điều chỉnh phạm vi với giảng viên trong quá trình thực hiện, không gọi mock là implementation hoàn chỉnh.
+Rủi ro lớn nhất là build thư viện nghiên cứu, độ rộng đề tài và khác biệt môi trường DB. Biện pháp đề xuất: spike sớm; giữ một query equality và một aggregate; tách worker/runtime; không làm Kubernetes/TEE; web portal chỉ là lớp demo mỏng trên gateway, không mở rộng thành EHR đầy đủ; giảm kích thước và số mức scale trước khi giảm nghĩa vụ Master. Việc dồn E8/E9 cùng re-test vào tuần 11 là rủi ro lịch chính của bản 1.2. Nếu một nhánh bắt buộc không khả thi, ghi mốc chặn và điều chỉnh phạm vi với giảng viên trong quá trình thực hiện, không gọi mock là implementation hoàn chỉnh.
 
-Thứ tự giảm tải: UI và hạ tầng ngoài lab; scale-up 100.000; nhiều biến thể policy/query; hybrid KEM tùy chọn. Giữ bộ tối thiểu đã chọn cho Master: core SQL/NoSQL, CP-ABE/revocation, E5 leakage/inference, BFV và PQ migration. Nhánh bắt buộc không vượt feasibility gate phải được điều chỉnh phạm vi với giảng viên, không thay bằng mock rồi tính là hoàn thành.
+Thứ tự giảm tải: tính năng portal ngoài luồng demo và hạ tầng ngoài lab; scale-up 100.000; nhiều biến thể policy/query; hybrid KEM tùy chọn. Giữ bộ tối thiểu đã chọn cho Master: core P1, phân tích SQL/NoSQL, CP-ABE/revocation, E5 leakage/inference, BFV và PQ migration. Nhánh bắt buộc không vượt feasibility gate phải được điều chỉnh phạm vi với giảng viên, không thay bằng mock rồi tính là hoàn thành.
 
 Sản phẩm cuối: source/config tái lập; architecture/DFD; asset/threat/SR/CR; policy và key lifecycle; test suite; raw CSV/JSON và biểu đồ; bảng leakage; báo cáo PQ readiness; traceability matrix; báo cáo kỹ thuật và slide/demo.
 
@@ -318,7 +318,7 @@ Tài liệu [G] và [T] là căn cứ học phần; các nguồn còn lại là 
 
 [10] [Microsoft Learn — Always Encrypted with secure enclaves](https://learn.microsoft.com/en-us/sql/relational-databases/security/encryption/always-encrypted-enclaves). Phương án đối chiếu; không triển khai TEE trong phạm vi chính.
 
-[11] [Charm-Crypto — Documentation and scheme implementations](https://jhuisi.github.io/charm/). Candidate CPabe_BSW07; chốt backend và tham số sau spike.
+[11] [Charm-Crypto — Documentation and scheme implementations](https://jhuisi.github.io/charm/). Dùng implementation AC17 với đường cong BN254 và SS512.
 
 [12] [NIST IR 8450 — Overview and Considerations of Access Control Based on Attribute Encryption](https://csrc.nist.gov/pubs/ir/8450/final).
 
@@ -327,6 +327,8 @@ Tài liệu [G] và [T] là căn cứ học phần; các nguồn còn lại là 
 [14] [NIST CSWP 39 update 1 — Considerations for Achieving Crypto Agility: Strategies and Practices](https://csrc.nist.gov/pubs/cswp/39/upd1/considerations-for-achieving-crypto-agility/final).
 
 [15] [NIST IR 8611 — m-NGAC: Transcending Traditional Database Security Models](https://csrc.nist.gov/pubs/ir/8611/final). Nguồn đối chiếu NGAC/m-NGAC được nêu trong Topic 18.
+
+[16] [S. Agrawal, M. Chase — FAME: Fast Attribute-based Message Encryption](https://doi.org/10.1145/3133956.3134014). ACM CCS, 2017. Scheme AC17 dùng cho P2.
 
 ## Phụ lục A. Thuật ngữ, mã truy vết và tài liệu kỹ thuật
 
@@ -349,3 +351,16 @@ RQ: câu hỏi nghiên cứu; SR: yêu cầu bảo mật cấp hệ thống; CR:
 Tài liệu kỹ thuật dùng khi triển khai: [Detailed project implementation](../planning/implementation-plan.md), [crypto and protocol design](../design/crypto-and-protocol-design.md), [experiments and validation](../testing/experiments-and-validation.md), [traceability matrix](../testing/traceability-matrix.md). Phạm vi và nguồn lực thực hiện tuân theo proposal được phê duyệt; kế hoạch chi tiết sẽ cụ thể hóa công việc cho nhóm hai học viên.
 
 Nguồn sơ đồ: [core overview](../diagrams/proposal-overview.mmd), [independent profiles](../diagrams/proposal-profiles.mmd); kiến trúc triển khai đầy đủ và DFD: [architecture](../diagrams/architecture.mmd), [data flows](../diagrams/data-flows.mmd). Hình trong proposal là bản trình bày rút gọn để đọc trên A4, không thay đặc tả protocol.
+
+## Phụ lục B. Thay đổi so với bản đăng ký 1.1
+
+| Hạng mục | Bản 1.1 (16/09/2026) | Bản 1.2 (23/11/2026) | Lý do và ảnh hưởng |
+|---|---|---|---|
+| Nền tảng lưu trữ | PostgreSQL và MongoDB, P1 trên cả hai | MongoDB 7.0 cho document; MinIO cho tệp nhị phân | Tập trung công sức vào câu hỏi DBA đọc được gì; hồ sơ y tế cần lưu ảnh/PDF. Mất số đo SQL và RLS; SQL/NoSQL chuyển thành phân tích kiến trúc, cần phê duyệt |
+| Scheme CP-ABE | Candidate BSW07 | AC17 (FAME) trên BN254, SS512 chỉ để so sánh | Tái sử dụng mã đã đánh giá của nhóm; nhóm ghép cặp Type-3. Không claim CCA, 128-bit cho SS512 hay PQ |
+| PDP | OPA hoặc tương đương | Engine ABAC Python, deny-by-default | Đơn giản hóa phụ thuộc; giữ bảng chân lý độc lập để kiểm thử |
+| Software KMS | Software KMS, chưa chốt | Vault Transit, khóa dẫn xuất theo ngữ cảnh, file storage bền vững | Vault dev mode mất toàn bộ KEK khi khởi động lại. Unseal key lưu cùng volume là giới hạn của lab |
+| Tenant dữ liệu | 3 tenant | 2 tenant (60/40) | Đủ kiểm thử tách tenant; giảm kích thước fixture |
+| Lịch | Tuần 10 PQC; không làm UI | Tuần 10 web portal demo; PQC E8/E9 dời sang tuần 11 | Portal phục vụ demo luồng bảo mật end-to-end; tăng rủi ro lịch tuần 11 |
+
+Chi tiết từng quyết định được ghi trong Architecture Decision Records của repository (ADR-0001 đến ADR-0003). Các phần khác của bản 1.1 giữ nguyên.

@@ -45,7 +45,7 @@ Tài khoản demo, cổng, lệnh nạp dữ liệu/benchmark và xử lý sự 
 
 ## Nguồn chuẩn
 
-- **Proposal chuẩn:** [docs/proposal/project-proposal.md](docs/proposal/project-proposal.md); bản Word sinh bằng `python -B scripts/render_proposal.py`. Proposal giữ phạm vi đã đăng ký; thay đổi kỹ thuật sau đó nằm trong ADR.
+- **Proposal chuẩn:** [docs/proposal/project-proposal.md](docs/proposal/project-proposal.md) — **bản 1.2 (23/11/2026)**, đã cập nhật MongoDB + MinIO, CP-ABE AC17, Vault và lịch; thay đổi so với bản đăng ký 1.1 ở Phụ lục B. Bản Word sinh bằng `python -B scripts/render_proposal.py`.
 - [Kế hoạch triển khai](docs/planning/implementation-plan.md), [kế hoạch từng bước](docs/planning/step-by-step-plan.md).
 - [Thiết kế mật mã](docs/design/crypto-and-protocol-design.md), [thí nghiệm và test catalog](docs/testing/experiments-and-validation.md).
 - [Guideline](docs/requirements/course-guideline.md) và [Topic 18](docs/requirements/topic-18.md) giữ nguyên nội dung, có kiểm tra SHA-256.

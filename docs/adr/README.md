@@ -10,4 +10,4 @@ Mỗi ADR ghi: proposed/accepted/superseded; bối cảnh và SR/CR; lựa chọ
 | [0002](0002-cpabe-ac17.md) | CP-ABE dùng AC17 (BN254/SS512) thay BSW07 | accepted |
 | [0003](0003-vault-persistent-lab-unseal.md) | Vault file storage + tự unseal cho lab | accepted |
 
-Đề xuất đang xét (chưa thành ADR): mTLS nội bộ + SPIFFE (`plan-mTLS.md`; đánh giá tại `TIEN_DO_HIEN_TAI.md` mục 7). Proposal gốc vẫn là [nguồn phạm vi đã đăng ký](../proposal/project-proposal.md); các ADR trên ghi phần lệch khỏi proposal.
+Đề xuất đang xét (chưa thành ADR): mTLS nội bộ + SPIFFE (`plan-mTLS.md`; đánh giá tại `TIEN_DO_HIEN_TAI.md` mục 7). Các quyết định trên đã được đưa vào [proposal bản 1.2](../proposal/project-proposal.md) (Phụ lục B).
