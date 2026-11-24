@@ -561,7 +561,9 @@ timeline
 
 ---
 
-## 7. ĐÁNH GIÁ KẾ HOẠCH `plan-mTLS.md` (23/11/2026)
+## 7. ĐÁNH GIÁ KẾ HOẠCH `plan-mTLS.md` (23/11/2026, đánh giá lại 24/11/2026)
+
+> **Cập nhật 24/11/2026:** `plan-mTLS.md` đã được **viết lại thành v2.0** theo phạm vi M1–M5 dưới đây. Các mục 7.1–7.3 giữ nguyên làm bản đánh giá bản v1. Phần bổ sung của lần đánh giá lại nằm ở mục 7.5.
 
 > **Kết luận ngắn:** Hướng đi đúng (mTLS nội bộ + SPIFFE ID là cách hiện thực M-12 trong `docs/design/crypto-and-protocol-design.md`), nhưng bản kế hoạch **không chạy được như đang viết** trên stack hiện tại. Lý do chính: chứng chỉ ML-DSA không dùng được với Vault, MinIO và Python/Uvicorn của dự án. Ngoài ra kế hoạch bỏ qua phần PQC quan trọng hơn là trao đổi khóa (KEM), và đi tắt qua Gateway tới MinIO. Đề xuất: làm mTLS cổ điển trước, còn PQC chỉ làm thành một thí nghiệm riêng.
 
@@ -603,8 +605,25 @@ timeline
 | **M1** | Private CA **ECDSA P-256** (Root offline + Intermediate) bằng OpenSSL 3.0 có sẵn. Cấp SVID chứa `URI:spiffe://medshare.local/ns/prod/sa/<svc>` + `DNS:<svc>.medshare.internal`, đủ EKU/KU | 0,5 ngày | Hiện thực M-12 đúng như thiết kế |
 | **M2** | Bật TLS cho **Vault** (listener `tls_cert_file`, `tls_require_and_verify_client_cert`), **MinIO** (`/root/.minio/certs`), **abe-worker** (Uvicorn `--ssl-cert-reqs 2 --ssl-ca-certs`) | 1 ngày | Vault dev mode phải chuyển sang cấu hình file để bật TLS listener |
 | **M3** | Gateway (host) dùng client cert khi gọi Vault/MinIO/abe-worker; thêm hàm kiểm tra SPIFFE ID của peer (đọc SAN URI từ `getpeercert()`) | 1 ngày | `VaultKmsClient`, `MinioStorage(secure=True)`, `AbeClient` |
-| **M4** | Test: thiếu cert → handshake fail; cert lạ CA → fail; **đúng CA nhưng sai SPIFFE ID → bị từ chối**; đúng → OK. Ghi vào traceability | 0,5 ngày | Có thể đặt mã TC-31 → TC-34 |
+| **M4** | Test: thiếu cert → handshake fail; cert lạ CA → fail; **đúng CA nhưng sai SPIFFE ID → bị từ chối**; đúng → OK. Ghi vào traceability | 0,5 ngày | Gắn vào **TC-20** (catalog đã có \"TLS certificate chain/name/expiry sai\"); không tạo mã TC mới |
 | **M5** *(tùy chọn – mở rộng E8)* | Một container nginx build với **OpenSSL 3.5**: đo handshake {ECDSA P-256, ML-DSA-44, ML-DSA-65} × {X25519, X25519MLKEM768}, ghi kích thước chuỗi chứng chỉ và độ trễ p50/p95 | 1–1,5 ngày | Đúng tinh thần "PQC readiness": đo đạc + inventory, không bắt buộc toàn hệ thống chạy ML-DSA |
 | — | Public Edge (DuckDNS + ACME DNS-01) | *Hoãn* | Chỉ làm nếu buổi demo bắt buộc truy cập từ Internet; phải đổi mật khẩu mặc định trước |
 
 **Đề xuất sửa `plan-mTLS.md`:** thay InfinityFree bằng DuckDNS; bỏ cạnh Ingress → MinIO; đổi `.local` thành `.internal`; sửa 3.293 thành 3.309 bytes; bổ sung hybrid KEM; thêm `san_type: URI`; sửa TC-PQC-01/04 và thêm test sai SPIFFE ID; ghi rõ phần ML-DSA là thí nghiệm (M5), không phải mặc định cho toàn hệ thống.
+
+### 7.5. Đánh giá lại ngày 24/11/2026
+
+File `plan-mTLS.md` không thay đổi từ 23/11 (md5 trùng với commit). Lần này kiểm tra thêm phiên bản thực tế; kết luận cũ vẫn đúng.
+
+| Thành phần | Phiên bản | Chứng chỉ ML-DSA | Trao đổi khóa PQ |
+|---|---|---|---|
+| Host OpenSSL / Python `ssl` (Gateway) | OpenSSL 3.0.2; không có `SSLContext.set_groups` | Không | Không chọn được nhóm |
+| Vault 1.15.6 | Go 1.21.7 | Không | Không |
+| MinIO `latest` | Go 1.23.0 | Không | `X25519Kyber768Draft00` (draft, không phải ML-KEM FIPS 203) |
+
+**Phát hiện mới:**
+1. **Lệch phiên bản Go:** Vault và MinIO khác nhau về khả năng KEM. Inventory M-12 phải ghi theo từng thành phần, không gọi chung là "PQ".
+2. **Nút thắt là phía client:** mọi kết nối đều có Gateway Python (OpenSSL 3.0.2) ở một đầu, nên nâng cấp server không làm handshake thành PQ. Muốn đo PQ phải dùng sidecar OpenSSL ≥ 3.5 và client `openssl s_client` (M5).
+3. **Sửa đề xuất cũ của chính mục 7.4:** không tạo TC-31 → TC-34 vì catalog giữ đúng 30 nhóm và `TC-20` đã bao gồm lỗi chứng chỉ TLS. Các ca mTLS được đặt là TC-20.a → f.
+
+**Kết quả:** `plan-mTLS.md` v2.0 gồm phạm vi Gateway ↔ Vault/MinIO/abe-worker, PKI ECDSA P-256 Root + Intermediate + SVID 7 ngày, SPIFFE ID `spiffe://medshare.local/ns/{z1|z2}/sa/<svc>`, DNS `*.medshare.internal`, cờ `MEDSHARE_MTLS` (mặc định tắt) và bảng đối chiếu 13 lỗi của v1. Quyết định được ghi thành ADR-0004 ở trạng thái *proposed*. Chưa viết code.

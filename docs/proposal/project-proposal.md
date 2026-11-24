@@ -14,7 +14,7 @@
 
 **Tính chất:** Nghiên cứu thực nghiệm kết hợp xây dựng prototype; không xây dựng DBMS mới, không đề xuất primitive mật mã mới.
 
-Đây là proposal đăng ký: mục tiêu, kiểm thử và sản phẩm dưới đây là kế hoạch và phạm vi cam kết, không phải báo cáo kết quả. Phạm vi đề nghị phê duyệt là các cấu hình E1–E5, E7–E9 tại mục 8; phân công cụ thể được quản lý trong kế hoạch triển khai riêng. Bản 1.2 điều chỉnh nền tảng lưu trữ, scheme CP-ABE, KMS và lịch; các điều chỉnh làm thay đổi nghĩa vụ Master được nêu rõ để giảng viên phê duyệt.
+Đây là proposal đăng ký: mục tiêu, kiểm thử và sản phẩm dưới đây là kế hoạch và phạm vi cam kết, không phải báo cáo kết quả. Phạm vi đề nghị phê duyệt là các cấu hình E1–E5, E7–E9 tại mục 8; phân công cụ thể được quản lý trong kế hoạch triển khai riêng. Bản 1.2 điều chỉnh nền tảng lưu trữ, scheme CP-ABE, KMS và lịch; danh sách thay đổi tại Phụ lục B.
 
 ## Tóm tắt đề xuất
 
@@ -198,7 +198,7 @@ Key-only rewrap giữ ciphertext/AAD khi DEK không đổi, nhưng không khắc
 | E8 | P4 PQC key/signature path | Đối chiếu baseline cổ điển; sizes/times, auth binding, algorithm negotiation |
 | E9 | Cross-cutting rotation/revocation | Downtime, rows touched, stale failure, residual decryptability |
 
-Giữ mã E theo Topic 18; không thực hiện E6 TEE. Có 8 experiments, ít nhất ba hướng bảo vệ khác logic ngoài baseline; E4/E7 đáp ứng nhánh nâng cao và E8/E9 đáp ứng PQC/crypto-agility. So sánh SQL/NoSQL được điều chỉnh thành phân tích kiến trúc có đối chiếu: Pattern A–D theo [T, mục 6] (RLS và Always Encrypted phía SQL [10]; scoped role và Queryable Encryption phía MongoDB [9], [13]) so với giới hạn đã đo được trên MongoDB ở E1–E3; không có số đo hiệu năng PostgreSQL. Đây là điều chỉnh so với yêu cầu Master “comparison SQL vs NoSQL” và cần giảng viên phê duyệt. Theo [T, mục 12], BFV đáp ứng lựa chọn HE/FHE thay TEE, còn E8/E9 đáp ứng lựa chọn crypto-agile PQ migration; đủ số experiment không thay thế nghĩa vụ định tính Master.
+Giữ mã E theo Topic 18; không thực hiện E6 TEE. Có 8 experiments, ít nhất ba hướng bảo vệ khác logic ngoài baseline; E4/E7 đáp ứng nhánh nâng cao và E8/E9 đáp ứng PQC/crypto-agility. So sánh SQL/NoSQL được điều chỉnh thành phân tích kiến trúc có đối chiếu: Pattern A–D theo [T, mục 6] (RLS và Always Encrypted phía SQL [10]; scoped role và Queryable Encryption phía MongoDB [9], [13]) so với giới hạn đã đo được trên MongoDB ở E1–E3; không có số đo hiệu năng PostgreSQL. Theo [T, mục 12], BFV đáp ứng lựa chọn HE/FHE thay TEE, còn E8/E9 đáp ứng lựa chọn crypto-agile PQ migration; đủ số experiment không thay thế nghĩa vụ định tính Master.
 
 ### 8.2 Phạm vi dữ liệu và tính khả thi
 
@@ -356,7 +356,7 @@ Nguồn sơ đồ: [core overview](../diagrams/proposal-overview.mmd), [independ
 
 | Hạng mục | Bản 1.1 (16/09/2026) | Bản 1.2 (23/11/2026) | Lý do và ảnh hưởng |
 |---|---|---|---|
-| Nền tảng lưu trữ | PostgreSQL và MongoDB, P1 trên cả hai | MongoDB 7.0 cho document; MinIO cho tệp nhị phân | Tập trung công sức vào câu hỏi DBA đọc được gì; hồ sơ y tế cần lưu ảnh/PDF. Mất số đo SQL và RLS; SQL/NoSQL chuyển thành phân tích kiến trúc, cần phê duyệt |
+| Nền tảng lưu trữ | PostgreSQL và MongoDB, P1 trên cả hai | MongoDB 7.0 cho document; MinIO cho tệp nhị phân | Tập trung công sức vào câu hỏi DBA đọc được gì; hồ sơ y tế cần lưu ảnh/PDF. So sánh SQL/NoSQL thực hiện bằng phân tích kiến trúc Pattern A–D (mục 8.1) |
 | Scheme CP-ABE | Candidate BSW07 | AC17 (FAME) trên BN254, SS512 chỉ để so sánh | Tái sử dụng mã đã đánh giá của nhóm; nhóm ghép cặp Type-3. Không claim CCA, 128-bit cho SS512 hay PQ |
 | PDP | OPA hoặc tương đương | Engine ABAC Python, deny-by-default | Đơn giản hóa phụ thuộc; giữ bảng chân lý độc lập để kiểm thử |
 | Software KMS | Software KMS, chưa chốt | Vault Transit, khóa dẫn xuất theo ngữ cảnh, file storage bền vững | Vault dev mode mất toàn bộ KEK khi khởi động lại. Unseal key lưu cùng volume là giới hạn của lab |

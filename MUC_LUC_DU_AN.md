@@ -82,7 +82,7 @@ NT2205.11.CH_Project/
 ├── SECURITY.md                   # Chính sách an toàn, cấm commit secret
 ├── TIEN_DO_HIEN_TAI.md           # Báo cáo tiến độ & nhật ký lệnh
 ├── generate_drawio.py            # Sinh sơ đồ Draw.io hệ thống
-├── plan-mTLS.md                  # [ĐỀ XUẤT] Kế hoạch mTLS + SPIFFE + PQC PKI (xem đánh giá ở TIEN_DO_HIEN_TAI.md §7)
+├── plan-mTLS.md                  # [ĐỀ XUẤT v2.0] mTLS nội bộ ECDSA + SPIFFE; PQ chỉ đo (TIEN_DO_HIEN_TAI.md §7)
 ├── so_do_he_thong_truoc.drawio / so_do_he_thong_sau.drawio # Sơ đồ hệ thống trước/sau khi áp dụng bảo vệ
 ├── so_do_hoat_dong_he_thong.drawio # Sơ đồ hoạt động toàn diện (Draw.io)
 └── srcFile.md                    # Danh mục nguồn dataset ảnh y khoa công khai
@@ -101,7 +101,7 @@ NT2205.11.CH_Project/
 * [**`SECURITY.md`**](SECURITY.md): Quy định bảo mật nghiêm ngặt của đồ án: Tuyệt đối cấm commit credentials, khóa private, secret tokens, mật khẩu DB, dữ liệu bệnh nhân thật; quy tắc kiểm toán mã nguồn trước khi push.
 * [**`HUONG_DAN_DICH_VU.md`**](HUONG_DAN_DICH_VU.md): Sổ tay vận hành: cổng, tài khoản dev, Quick Start, lệnh nạp dữ liệu/benchmark/test, xử lý sự cố.
 * [**`BAO_CAO_SO_LUOC.md`**](BAO_CAO_SO_LUOC.md), [**`SCRIPT_THUYET_TRINH.md`**](SCRIPT_THUYET_TRINH.md), **`PROPOSAL_MedShare_Lab.pptx`**: Bộ tài liệu trình bày đề cương (báo cáo sơ lược, kịch bản nói, slide).
-* [**`plan-mTLS.md`**](plan-mTLS.md): Bản đề xuất kênh truyền nội bộ mTLS + SPIFFE + PKI ML-DSA. **Chưa triển khai**; đánh giá khả thi và phạm vi rút gọn tại `TIEN_DO_HIEN_TAI.md` mục 7.
+* [**`plan-mTLS.md`**](plan-mTLS.md): Kế hoạch v2.0 (24/11/2026) cho kênh nội bộ mTLS ECDSA P-256 + SPIFFE ID giữa Gateway và Vault/MinIO/abe-worker, test TC-20.a → f, thí nghiệm ML-DSA/hybrid KEM tùy chọn (E8 mở rộng). **Chưa triển khai**; đánh giá tại `TIEN_DO_HIEN_TAI.md` mục 7.
 * [**`srcFile.md`**](srcFile.md): Danh mục nguồn dataset ảnh y khoa công khai (X-quang, CT/MRI, siêu âm) dùng làm tệp mẫu.
 * **`generate_drawio.py`**, **`so_do_he_thong_truoc.drawio`**, **`so_do_he_thong_sau.drawio`**: Script sinh sơ đồ và hai sơ đồ so sánh hệ thống trước/sau khi áp dụng các lớp bảo vệ.
 * **`.gitignore`**: Danh sách loại trừ các tệp nhạy cảm hoặc tệp sinh tự động: Môi trường ảo `.venv/`, dữ liệu database runtime `infra/runtime/`, dataset đã sinh `datasets/generated/`, file oracle `datasets/oracle/`, báo cáo kết quả `benchmarks/results/` và chứng tích `evidence/runs/`.

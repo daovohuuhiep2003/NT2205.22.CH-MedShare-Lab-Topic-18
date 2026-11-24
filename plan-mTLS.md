@@ -1,232 +1,137 @@
-> **[ĐÁNH GIÁ 23/11/2026] Trạng thái: ĐỀ XUẤT – CHƯA TRIỂN KHAI.** Bản kế hoạch này có một số điểm chặn triển khai: OpenSSL host 3.0.2 chưa có ML-DSA; Vault/MinIO (Go) không dùng được chứng chỉ ML-DSA; InfinityFree không cấp DNS cho máy chủ riêng. Ngoài ra có lỗi nội dung (chữ ký ML-DSA-65 là 3.309 bytes; thiếu hybrid KEM; Ingress không được nối thẳng MinIO). Xem đánh giá đầy đủ và phạm vi rút gọn tại [`TIEN_DO_HIEN_TAI.md` – mục 7](TIEN_DO_HIEN_TAI.md).
+# Kế hoạch mTLS nội bộ + định danh SPIFFE — v2.0
 
-Dưới đây là **Kế hoạch Thiết kế & Triển khai Toàn diện** theo đúng các yêu cầu kỹ thuật của bạn:
-1. **Public Edge TLS:** Ingress Controller sử dụng chứng chỉ ECDSA (Elliptic Curve) từ ZeroSSL / InfinityFree.
-2. **Internal Zero-Trust mTLS:** Toàn bộ kết nối giữa Ingress Controller và các Docker Services chạy mTLS nội bộ.
-3. **Định danh SPIFFE:** Sử dụng SPIFFE ID nhúng vào X.509 SVID SAN URI.
-4. **Service Registry & Local DNS:** Quản lý tên miền nội bộ qua Orchestrator (K8s CoreDNS hoặc Docker DNS).
-5. **Private Post-Quantum PKI:** Tự dựng Root CA Server cấp phát chứng chỉ thuật toán chữ ký hậu lượng tử NIST FIPS 204 (**ML-DSA-44** hoặc **ML-DSA-65**).
+> **Trạng thái:** ĐỀ XUẤT – CHƯA TRIỂN KHAI (viết lại 24/11/2026). Bản v1 (PKI ML-DSA toàn hệ thống, Public Edge InfinityFree/ZeroSSL, Envoy Ingress) nằm trong lịch sử Git và **không triển khai được trên stack hiện tại**. Lý do và các lỗi của v1: xem mục 8 và `TIEN_DO_HIEN_TAI.md` mục 7.
+>
+> **Liên kết:** cơ chế M-12 trong `docs/design/crypto-and-protocol-design.md`; threat T-11; yêu cầu SR-15; test TC-20 trong `docs/testing/experiments-and-validation.md`; ADR-0004 (proposed) trong `docs/adr/README.md`.
 
----
+## 1. Mục tiêu và phạm vi
 
-### Mô hình Kiến trúc Tổng thể (Dual-Tier Security Architecture)
+**Vấn đề:** Gateway (Zone Z1, chạy trên host) gọi Vault KMS, MinIO và CP-ABE worker bằng **HTTP không mã hóa, không xác thực lẫn nhau**. Bất kỳ tiến trình nào vào được mạng Docker/host đều có thể:
+- nghe lén DEK đã unwrap trên đường từ Vault về;
+- giả mạo abe-worker hoặc MinIO;
+- dùng token Vault đã lộ từ bất kỳ đâu.
 
-```mermaid
-flowchart TD
-    subgraph Internet_Public["1. Public Internet (Edge Zone)"]
-        Client["Người dùng / Trình duyệt"]
-        Domain["Tên miền: your-domain.infinityfreeapp.com"]
-        ZeroSSL["ZeroSSL / ACME (ECDSA P-256 Curve)"]
-    end
+**Mục tiêu:** mỗi kết nối nội bộ phải là mTLS. Hai phía kiểm tra chứng chỉ do CA nội bộ cấp **và** kiểm tra **SPIFFE ID** của phía kia, không chỉ kiểm tra hostname.
 
-    subgraph Edge_Gateway["2. Ingress Controller (API Gateway)"]
-        Ingress["Ingress Controller (Envoy / Traefik / Nginx)\n- Termination Public TLS (Curve)\n- mTLS Client/Server (ML-DSA)"]
-    end
+| Trong phạm vi | Ngoài phạm vi (lý do) |
+|---|---|
+| Gateway ↔ Vault (`:8200`) | Kết nối Gateway ↔ MongoDB — chỉ chở ciphertext; làm sau nếu còn thời gian |
+| Gateway ↔ MinIO (`:9000`) | Public Edge / tên miền công khai — hoãn (mục 7) |
+| Gateway ↔ abe-worker (`:9002`) | HE và PQC worker — là CLI, không có kết nối mạng |
+| Inventory thuật toán TLS (M-12) | Chứng chỉ ML-DSA cho toàn hệ thống — chưa thư viện nào trong stack hỗ trợ (mục 2) |
 
-    subgraph Internal_PQC_PKI["3. Private PQC CA & Service Registry (Zone Z1)"]
-        RootCA["ML-DSA Root CA Server\n(ML-DSA-44 / ML-DSA-65 FIPS 204)"]
-        SPIFFE_Mgr["Service Registry & SPIFFE Manager\n(Cấp phát SVID, Map Service Name)"]
-        LocalDNS["Orchestrator DNS (K8s CoreDNS / Docker DNS)"]
-    end
+**Không tuyên bố:** kênh "an toàn hậu lượng tử". Bản này dùng ECDSA P-256 + X25519 cổ điển. Phần PQ chỉ được đo trong thí nghiệm tùy chọn (mục 6).
 
-    subgraph Docker_Services["4. Internal Microservices (Local Network Zone)"]
-        direction TB
-        SvcGateway["EMR Gateway Service\nspiffe://medshare.local/ns/prod/sa/gateway"]
-        SvcMinio["MinIO S3 Storage\nspiffe://medshare.local/ns/prod/sa/minio"]
-        SvcVault["HashiCorp Vault KMS\nspiffe://medshare.local/ns/prod/sa/vault"]
-        SvcABE["Charm CP-ABE Worker\nspiffe://medshare.local/ns/prod/sa/abe-worker"]
-        SvcSEAL["Microsoft SEAL BFV Worker\nspiffe://medshare.local/ns/prod/sa/he-worker"]
-    end
+## 2. Hiện trạng đã kiểm tra (24/11/2026)
 
-    Client -- "HTTPS / TLS 1.3 (ZeroSSL Curve P-256)" --> Ingress
-    ZeroSSL -. "Cấp Cert Public" .-> Ingress
-    Domain -. "Trỏ IP Ingress" .-> Ingress
-
-    RootCA -- "Cấp Cert mTLS ML-DSA" --> Ingress
-    RootCA -- "Cấp Cert mTLS ML-DSA" --> Docker_Services
-    SPIFFE_Mgr -. "Đăng ký & xác thực SPIFFE ID" .-> Docker_Services
-    LocalDNS -. "Phân giải tên service" .-> Ingress
-
-    Ingress <-- "mTLS (ML-DSA-44/65 + SPIFFE Verification)" --> SvcGateway
-    Ingress <-- "mTLS (ML-DSA-44/65 + SPIFFE Verification)" --> SvcMinio
-    SvcGateway <-- "mTLS (ML-DSA-44/65 + SPIFFE Verification)" --> SvcVault
-    SvcGateway <-- "mTLS (ML-DSA-44/65 + SPIFFE Verification)" --> SvcABE
-    SvcGateway <-- "mTLS (ML-DSA-44/65 + SPIFFE Verification)" --> SvcSEAL
-```
-
----
-
-### Phần 1: Public Ingress TLS (InfinityFree + ZeroSSL Curve)
-
-* **Mục tiêu:** Cung cấp kết nối HTTPS an toàn, được các trình duyệt phổ thông tin cậy mà không tốn chi phí mua domain/cert.
-* **Quy trình triển khai:**
-  1. **Đăng ký Domain miễn phí:**
-     * Đăng ký tài khoản trên InfinityFree để nhận subdomain miễn phí (ví dụ: `medshare-lab.infinityfreeapp.com` hoặc dùng FreeDNS / DuckDNS trỏ CNAME/A về IP máy chủ).
-  2. **Khởi tạo chứng chỉ ZeroSSL với thuật toán Elliptic Curve:**
-     * Không dùng RSA 2048 truyền thống; cấu hình ACME client (như `certbot` hoặc `acme.sh`) chỉ định khóa Elliptic Curve:
-       ```bash
-       acme.sh --issue -d medshare-lab.infinityfreeapp.com \
-         --server zerossl \
-         --keylength ec-256 \
-         --dns dns_infinityfree  # hoặc qua HTTP-01 Webroot
-       ```
-     * *Kết quả:* Cặp khóa bí mật và chứng chỉ số `fullchain.pem` dựa trên đường cong chuẩn **ECDSA P-256 (prime256v1)** hoặc **Ed25519**.
-  3. **Cấu hình trên Ingress Controller:**
-     * Ingress Controller đảm nhiệm việc Terminate (giải mã) kết nối TLS 1.3 công cộng từ người dùng, kiểm tra HTTP header, sau đó chuẩn bị đóng gói mTLS vào mạng nội bộ.
-
----
-
-### Phần 2: Orchestrator Service Registry & Chuẩn Định danh SPIFFE
-
-* **Service Registry & Local DNS:**
-  * **Nếu dùng Kubernetes (K8s / K3s):**
-    * Tận dụng Kubernetes Services và **CoreDNS**: mỗi service tự động có DNS FQDN nội bộ: `<service-name>.<namespace>.svc.cluster.local` (ví dụ: `gateway-svc.medshare.svc.cluster.local`, `minio-svc.medshare.svc.cluster.local`).
-  * **Nếu dùng Docker Compose / Docker Swarm:**
-    * Sử dụng mạng nội bộ do người dùng định nghĩa (`networks: [medshare-net]`): Docker Embedded DNS Engine (`127.0.0.11`) tự động phân giải tên service thành IP container tương ứng (`http://gateway:8000`, `http://minio:9000`).
-* **Chuẩn Định danh SPIFFE (Secure Production Identity Framework for Everyone):**
-  * Định dạng URI định danh SPIFFE ID:
-    $$\text{spiffe://medshare.local/ns/}\{namespace\}\text{/sa/}\{service-name\}$$
-  * Bảng phân bổ SPIFFE ID cho hệ thống:
-
-| Service Name | Local DNS | SPIFFE ID (URI SAN trong Cert) | Vai trò trong hệ thống |
+| Thành phần | Phiên bản | Chứng chỉ ML-DSA | Trao đổi khóa PQ |
 |---|---|---|---|
-| **Ingress Controller** | `ingress.medshare.local` | `spiffe://medshare.local/ns/ingress/sa/ingress-proxy` | Reverse Proxy / API Gateway |
-| **EMR Gateway** | `gateway.medshare.local` | `spiffe://medshare.local/ns/prod/sa/gateway` | Zone Z1 PEP Gateway & EMR API |
-| **Vault KMS** | `vault.medshare.local` | `spiffe://medshare.local/ns/prod/sa/vault` | HashiCorp Vault Transit Engine |
-| **MinIO S3** | `minio.medshare.local` | `spiffe://medshare.local/ns/prod/sa/minio` | Lưu trữ S3 Ciphertext PACS |
-| **CP-ABE Worker** | `abe-worker.medshare.local` | `spiffe://medshare.local/ns/prod/sa/abe-worker` | Thuật toán mã hóa thuộc tính AC17 |
-| **SEAL BFV Worker** | `he-worker.medshare.local` | `spiffe://medshare.local/ns/prod/sa/he-worker` | Tính toán đồng cấu viện phí BFV |
+| Host OpenSSL / Python `ssl` (Gateway) | OpenSSL 3.0.2; không có `SSLContext.set_groups` | Không (cần ≥ 3.5) | Không chọn được nhóm |
+| Vault 1.15.6 | Go 1.21.7 | Không | Không |
+| MinIO `latest` | Go 1.23.0 | Không | `X25519Kyber768Draft00` (bản draft, không phải ML-KEM FIPS 203) |
+| abe-worker (Uvicorn, Python 3.10, Ubuntu 22.04) | OpenSSL 3.0.x | Không | Không |
 
-* **Quy chuẩn nhúng vào Chứng chỉ:**
-  * SPIFFE ID được nhúng bắt buộc vào trường **Subject Alternative Name (SAN)** dưới dạng `URI:spiffe://...`.
-  * Tên Service DNS được nhúng vào trường `DNS:gateway.medshare.local`.
+Kết luận: chỉ dùng được **chứng chỉ ECDSA P-256** và trao đổi khóa **X25519**. Mỗi kết nối đều có Gateway (Python 3.0.2) ở một đầu, nên kể cả nâng cấp server thì handshake vẫn là cổ điển.
 
----
+## 3. Định danh SPIFFE và tên DNS
 
-### Phần 3: Xây dựng Private PQC Root CA Server (NIST ML-DSA-44 / ML-DSA-65)
+- Trust domain: `spiffe://medshare.local`. Trust domain không cần phân giải DNS nên không vướng `.local`.
+- DNS nội bộ: `*.medshare.internal`. Không dùng `.local` vì đuôi này dành cho mDNS (RFC 6762). Gateway chạy trên host nên cần ánh xạ trong `/etc/hosts` (`127.0.0.1 vault.medshare.internal ...`). Các container dùng `networks: aliases` trong compose.
 
-Đây là thành phần cốt lõi để đưa thuật toán **Hậu lượng tử (Post-Quantum)** vào bảo vệ giao tiếp mTLS cục bộ:
+| Dịch vụ | DNS SAN | SPIFFE ID (URI SAN) | Vai trò TLS |
+|---|---|---|---|
+| Gateway | — | `spiffe://medshare.local/ns/z1/sa/gateway` | client |
+| Vault KMS | `vault.medshare.internal` | `spiffe://medshare.local/ns/z1/sa/vault` | server |
+| abe-worker | `abe-worker.medshare.internal` | `spiffe://medshare.local/ns/z1/sa/abe-worker` | server |
+| MinIO | `minio.medshare.internal` | `spiffe://medshare.local/ns/z2/sa/minio` | server |
 
-* **Lựa chọn thuật toán NIST FIPS 204:**
-  * **ML-DSA-44 (trước đây là Dilithium2):**
-    * Mức an ninh: NIST Category 2 (tương đương phá vỡ AES-128 / SHA-256).
-    * Kích thước khóa công khai: $1.312\text{ bytes}$, Chữ ký: $2.420\text{ bytes}$.
-    * *Đặc tính:* Tốc độ ký và xác thực cực nhanh, phù hợp vi dịch vụ tần suất giao tiếp cao.
-  * **ML-DSA-65 (trước đây là Dilithium3):**
-    * Mức an ninh: NIST Category 3 (tương đương phá vỡ AES-192 / SHA-384).
-    * Kích thước khóa công khai: $1.952\text{ bytes}$, Chữ ký: $3.293\text{ bytes}$.
-    * *Đặc tính:* Độ an toàn cao hơn, phù hợp cho Root CA và các dịch vụ lưu trữ nhạy cảm (KMS, EMR Gateway).
+Namespace `z1`/`z2` mã hóa luôn vùng tin cậy vào định danh. Chính sách mặc định: chỉ chấp nhận peer có SPIFFE ID nằm trong allowlist của từng kết nối.
 
-* **Công nghệ triển khai CA Engine:**
-  * Sử dụng thư viện **OpenSSL 3.x kết hợp OQS-Provider (Open Quantum Safe)** hoặc module Python tự viết dựa trên `liboqs-python` và thư viện chuẩn `cryptography`:
-  ```bash
-  # 1. Tạo Root CA Key bằng thuật toán ML-DSA-65
-  openssl req -x509 -new -newkey mldsa65 -nodes \
-    -keyout pqc_root_ca.key \
-    -out pqc_root_ca.crt \
-    -days 3650 \
-    -subj "/CN=MedShare PQC Root CA/O=MedShare Lab/OU=Security"
+## 4. PKI nội bộ
 
-  # 2. Tạo khóa cho Service (ví dụ: gateway) bằng ML-DSA-44 hoặc ML-DSA-65
-  openssl req -new -newkey mldsa44 -nodes \
-    -keyout gateway.key \
-    -out gateway.csr \
-    -subj "/CN=gateway.medshare.local/O=MedShare Lab"
+- **Root CA:** ECDSA P-256, hạn 10 năm, chỉ dùng để ký Intermediate; private key giữ offline (ngoài repo, không mount vào container).
+- **Intermediate CA:** ECDSA P-256, hạn 1 năm, `pathlen:0`; dùng để ký SVID.
+- **SVID (leaf):** ECDSA P-256, hạn **7 ngày** (lab; SPIRE mặc định khoảng 1 giờ). Extensions bắt buộc:
+  - `basicConstraints = critical, CA:FALSE`
+  - `keyUsage = critical, digitalSignature`
+  - `extendedKeyUsage = serverAuth` (server), `clientAuth` (gateway), hoặc cả hai
+  - `subjectAltName = URI:spiffe://..., DNS:<svc>.medshare.internal`
+- **Công cụ:** script tĩnh `scripts/gen_mtls_certs.sh` dùng OpenSSL 3.0 có sẵn. Script sinh Root (nếu chưa có), Intermediate và 4 SVID vào `infra/runtime/pki/` (gitignored, quyền 600). Chạy lại script = xoay vòng SVID.
+- **Không dùng** cert-manager đọc Docker socket: socket Docker tương đương quyền root trên host. Nếu sau này cần cấp tự động, dùng SPIRE hoặc step-ca.
 
-  # 3. Ký chứng chỉ có gắn kèm SPIFFE URI SAN và Service DNS
-  openssl x509 -req -in gateway.csr \
-    -CA pqc_root_ca.crt -CAkey pqc_root_ca.key -CAcreateserial \
-    -out gateway.crt -days 90 \
-    -extfile <(echo "subjectAltName=DNS:gateway.medshare.local,URI:spiffe://medshare.local/ns/prod/sa/gateway")
-  ```
+## 5. Cấu hình từng kết nối
 
-* **Module Quản lý Dịch vụ & Cấp phát Cert (Service Certificate Agent Module):**
-  * Xây dựng một module gọn nhẹ `pqc-cert-manager`:
-    1. Tiếp nhận đăng ký từ container mới (thông qua Docker socket hoặc API nội bộ).
-    2. Xác thực định danh service thông qua Orchestrator metadata (Service Account, Container Name).
-    3. Tự động sinh cặp khóa ML-DSA và yêu cầu CA Server cấp phát X.509 SVID (Cert).
-    4. Gắn certificate và private key vào volume bí mật của container (`/etc/ssl/mtls/`).
-    5. Định kỳ xoay vòng chứng chỉ (Automated Certificate Rotation).
+| Kết nối | Phía server | Phía client (Gateway) |
+|---|---|---|
+| Vault | `infra/vault/config.hcl`: `tls_cert_file`, `tls_key_file`, `tls_client_ca_file`, `tls_require_and_verify_client_cert = true`, `tls_min_version = "tls13"`; `entrypoint.sh` đổi `VAULT_ADDR` sang `https://` kèm `VAULT_CACERT`/`VAULT_CLIENT_CERT` cho các lệnh nội bộ và healthcheck | `VaultKmsClient` (`src/medshare/broker/kms.py`): `session.cert = (crt, key)`, `session.verify = ca_bundle`; kiểm tra SPIFFE ID của peer |
+| MinIO | Mount `public.crt`/`private.key` và `CAs/` vào `/root/.minio/certs/`; bật xác thực client cert | `MinioStorage` (`src/medshare/storage/minio_dal.py`): `secure=True`, truyền `http_client` urllib3 `PoolManager(cert_file, key_file, ca_certs)` |
+| abe-worker | Uvicorn `--ssl-certfile --ssl-keyfile --ssl-ca-certs --ssl-cert-reqs 2` | `AbeClient` (`src/medshare/crypto/abe_client.py`): `ssl.SSLContext(PROTOCOL_TLS_CLIENT)`, `load_cert_chain`, `load_verify_locations`, `minimum_version = TLSv1_3` |
 
----
+**Module dùng chung** `src/medshare/transport/mtls.py`, gồm:
+- `load_mtls_config()`: đọc biến môi trường `MEDSHARE_MTLS`, `MEDSHARE_PKI_DIR`.
+- `build_client_ssl_context()`
+- `verify_peer_spiffe_id(peercert, allowed: set[str])`: đọc SAN URI từ `getpeercert()`; nếu không khớp allowlist thì ném lỗi fail-closed.
 
-### Phần 4: Thiết lập mTLS giữa Ingress Controller và Docker Services
+**Bật/tắt:** `MEDSHARE_MTLS=0` (mặc định) giữ HTTP như hiện tại để 100 test hiện có vẫn chạy được. `MEDSHARE_MTLS=1` thì bắt buộc mTLS, không có fallback âm thầm về HTTP.
 
-* **Nguyên lý hoạt động của mTLS nội bộ:**
-  1. Khi Ingress Controller nhận request từ Internet (sau khi giải mã TLS ZeroSSL), nó tạo một kết nối mTLS mới tới service đích (ví dụ `gateway.medshare.local:8000`).
-  2. **Service Authentication (Kiểm tra phía Server):** Service gửi chứng chỉ ML-DSA của nó cho Ingress. Ingress đối soát với `pqc_root_ca.crt` và kiểm tra SAN DNS có khớp `gateway.medshare.local` hay không.
-  3. **Client Authentication (Kiểm tra phía Client):** Service yêu cầu Ingress gửi chứng chỉ client. Ingress gửi chứng chỉ ML-DSA của mình. Service xác minh chứng chỉ do `pqc_root_ca.crt` ký và kiểm tra trường SPIFFE ID:
-     $$\text{SAN URI} == \text{"spiffe://medshare.local/ns/ingress/sa/ingress-proxy"}$$
-  4. Hai bên thương lượng session key an toàn và bắt đầu trao đổi dữ liệu. Bất kỳ kẻ tấn công nào đứng trong mạng Docker cũng không thể nghe lén hoặc giả mạo request vì không có chứng chỉ do PQC Root CA cấp.
+**Phía server kiểm tra SPIFFE ID của client:**
+- abe-worker: middleware FastAPI đọc `request.scope["transport"].get_extra_info("peercert")`.
+- Vault, MinIO: chỉ dựa vào CA nội bộ, vì không cấu hình được allowlist SPIFFE.
+- Đây là giới hạn của bản lab và cần ghi rõ: ở Vault và MinIO, mọi chứng chỉ do Intermediate ký đều được chấp nhận, nên phải giữ Intermediate chỉ cấp cho 4 dịch vụ.
 
-* **Cấu hình mẫu Ingress Controller (Ví dụ Envoy Proxy hỗ trợ PQC/mTLS):**
-  ```yaml
-  clusters:
-  - name: ehr_gateway_service
-    connect_timeout: 0.5s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: ehr_gateway_service
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address:
-                address: gateway.medshare.local
-                port_value: 8000
-    transport_socket:
-      name: envoy.transport_sockets.tls
-      typed_config:
-        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-        common_tls_context:
-          tls_certificates:
-          - certificate_chain: { filename: "/etc/ssl/mtls/ingress.crt" }
-            private_key: { filename: "/etc/ssl/mtls/ingress.key" }
-          validation_context:
-            trusted_ca: { filename: "/etc/ssl/mtls/pqc_root_ca.crt" }
-            match_typed_subject_alt_names:
-            - matcher:
-                exact: "spiffe://medshare.local/ns/prod/sa/gateway"
-  ```
+## 6. Kiểm thử và đo đạc
 
----
+Các test sau gắn với **TC-20** (catalog đã có "TLS certificate chain/name/expiry sai"), T-11, SR-15 và M-12. Không tạo mã TC mới vì catalog giữ đúng 30 nhóm.
 
-### Phần 5: Kế hoạch Triển khai Chi tiết (5 Bước Thực hiện)
+| Ca | Kịch bản | Kỳ vọng |
+|---|---|---|
+| TC-20.a | Client không gửi chứng chỉ | Handshake thất bại, TLS alert `certificate_required` (116); không có phản hồi HTTP |
+| TC-20.b | Chứng chỉ do CA lạ ký | Handshake thất bại (`unknown_ca`) |
+| TC-20.c | **Đúng CA nhưng sai SPIFFE ID** (dùng SVID của abe-worker để gọi Vault qua Gateway) | Gateway từ chối sau handshake, trước khi gửi request |
+| TC-20.d | SVID hết hạn / sai DNS SAN | Handshake thất bại |
+| TC-20.e | Chứng chỉ và SPIFFE ID đúng | Thành công; toàn bộ 100 test chạy lại với `MEDSHARE_MTLS=1` đều pass |
+| TC-20.f | Không chạy lại `gen_mtls_certs.sh` (SVID hết hạn sau 7 ngày) | Fail-closed, không tự fallback về HTTP |
 
-| Bước | Hạng mục công việc | Deliverables (Sản phẩm bàn giao) | Công cụ / Công nghệ |
-|:---:|---|---|---|
-| **B1** | **Thiết lập Public Edge TLS** | - Tên miền phụ InfinityFree / FreeDNS.<br>- Chứng chỉ ZeroSSL Curve P-256 qua ACME.<br>- Cấu hình TLS 1.3 Terminate trên Ingress. | `acme.sh` / `certbot`, ZeroSSL API, Nginx / Traefik / Envoy. |
-| **B2** | **Cấu hình Orchestrator & DNS Nội bộ** | - Khởi tạo Network Docker / K8s namespace.<br>- Đặt Service Name chuẩn xác (`gateway`, `minio`, `vault`, `abe-worker`, `he-worker`).<br>- Kiểm tra phân giải DNS nội bộ. | Docker Compose network bridge hoặc K8s CoreDNS. |
-| **B3** | **Xây dựng PQC Root CA Server** | - Script sinh khóa gốc & Root CA `pqc_root_ca.crt` bằng **ML-DSA-65**.<br>- Module cấp phát cert nội bộ hỗ trợ nhúng **SPIFFE ID** và **DNS SAN**.<br>- Cơ chế ký CSR bằng **ML-DSA-44** cho vi dịch vụ. | OpenSSL 3 + `oqs-provider` (hoặc `liboqs-python`). |
-| **B4** | **Triển khai mTLS cho các Services** | - Cấu hình Ingress Controller gửi client cert ML-DSA và xác minh SPIFFE.<br>- Cấu hình Uvicorn FastAPI & các worker kích hoạt chế độ `ssl_cert_reqs=CERT_REQUIRED`.<br>- Tích hợp middleware kiểm tra SPIFFE ID trên từng request. | FastAPI / Uvicorn SSL Context, Envoy Upstream / Downstream TLS. |
-| **B5** | **Kiểm thử An ninh & Đo lường Hiệu năng** | - Test case xác minh bắt buộc có chứng chỉ client hợp lệ.<br>- Test case chặn client mạo danh (sai SPIFFE ID hoặc sai CA).<br>- Đo độ trễ bắt tay mTLS (Handshake Latency) giữa ML-DSA-44 vs ML-DSA-65 vs RSA/ECC cổ điển. | `pytest`, `curl --cert --key`, Wireshark / `tcpdump`. |
+Đo thêm: thời gian handshake p50/p95 cho từng kết nối, mức tăng độ trễ của W1/W2 so với E2. Mọi thứ được đo trên cùng máy và dataset với E2.
 
----
+**Thí nghiệm tùy chọn (mở rộng E8), không chặn tiến độ chính:**
+- Dựng một container nginx build với OpenSSL ≥ 3.5 làm sidecar trước abe-worker.
+- Đo handshake cho các tổ hợp {ECDSA P-256, ML-DSA-44, ML-DSA-65} × {X25519, X25519MLKEM768}, ghi kích thước chuỗi chứng chỉ (bytes) và thời gian.
+- Client đo là `openssl s_client` 3.5, không phải Gateway Python.
+- Kết quả ghi vào inventory M-12 kèm phiên bản Go/OpenSSL của từng thành phần.
 
-### Kịch bản Kiểm thử & Thẩm định Tiêu chí Nghiệm thu
+## 7. Lộ trình
 
-1. **TC-PQC-01: Kiểm tra Public Edge TLS:**
-   * Truy cập `https://your-domain.infinityfreeapp.com`: Trình duyệt hiển thị ổ khóa xanh hợp lệ, Cipher suite sử dụng `TLS_AES_256_GCM_SHA384` hoặc `ECDHE-ECDSA-AES256-GCM-SHA384`.
-2. **TC-PQC-02: Kiểm tra Thuật toán Chứng chỉ Nội bộ:**
-   * Chạy lệnh kiểm tra chứng chỉ:
-     ```bash
-     openssl x509 -in gateway.crt -text -noout | grep "Signature Algorithm"
-     ```
-   * *Kết quả mong đợi:* Thuật toán hiển thị `mldsa44` hoặc `mldsa65` (FIPS 204).
-3. **TC-PQC-03: Kiểm tra SPIFFE ID trong SAN:**
-   * Trích xuất trường SAN:
-     ```bash
-     openssl x509 -in gateway.crt -text -noout | grep -A 2 "Subject Alternative Name"
-     ```
-   * *Kết quả mong đợi:* Chứa cả `DNS:gateway.medshare.local` và `URI:spiffe://medshare.local/ns/prod/sa/gateway`.
-4. **TC-PQC-04: Kiểm tra Chặn mTLS khi không có Client Certificate:**
-   * Gửi request trực tiếp từ một container lạ vào Gateway mà không kèm cert:
-     ```bash
-     curl -k https://gateway.medshare.local:8000/api/v1/patients
-     ```
-   * *Kết quả mong đợi:* Bị từ chối ngay tại tầng TLS Handshake (`SSL: PEER_DID_NOT_RETURN_A_CERTIFICATE` / HTTP 403).
-5. **TC-PQC-05: Kiểm tra Xác thực Đúng SPIFFE ID:**
-   * Ingress Controller gửi đúng Client Cert mang SPIFFE ID `spiffe://medshare.local/ns/ingress/sa/ingress-proxy` $\rightarrow$ Handshake thành công và xử lý request bình thường.
+| Bước | Nội dung | Ước lượng |
+|:---:|---|:---:|
+| M1 | `scripts/gen_mtls_certs.sh`, PKI Root/Intermediate/SVID, `/etc/hosts` + network aliases | 0,5 ngày |
+| M2 | TLS server cho Vault (sửa `config.hcl`, `entrypoint.sh`, healthcheck), MinIO, abe-worker | 1 ngày |
+| M3 | `src/medshare/transport/mtls.py` + 3 client + middleware SPIFFE ở abe-worker | 1 ngày |
+| M4 | Test TC-20.a → f, chạy lại 100 test với `MEDSHARE_MTLS=1`, cập nhật traceability | 0,5 ngày |
+| M5 *(tùy chọn)* | Thí nghiệm sidecar OpenSSL 3.5 (E8 mở rộng) | 1–1,5 ngày |
+| — | Public Edge (tên miền công khai + chứng chỉ ACME) | Hoãn |
 
-Kế hoạch này đảm bảo phân tách rõ ràng giữa **giao tiếp công cộng bên ngoài** (thuận tiện cho người dùng bằng chuẩn web quốc tế) và **giao tiếp Zero-Trust bên trong** (bảo vệ tuyệt đối trước mối đe dọa máy tính lượng tử tương lai bằng NIST ML-DSA và SPIFFE). Bạn có muốn bắt đầu triển khai ngay từ **Bước 3: Khởi tạo module PQC Root CA Server (ML-DSA)** không?
+**Điều kiện nếu sau này cần Public Edge:**
+- Dùng **DuckDNS** hoặc một domain riêng + Cloudflare DNS, với `acme.sh --dns dns_duckdns` (DNS-01).
+- Chỉ mở cổng 443 của Portal.
+- **Đổi toàn bộ mật khẩu/token mặc định trước** (xem `SECURITY.md` mục 1).
+- Cipher suite kỳ vọng là `TLS_AES_256_GCM_SHA384` hoặc `TLS_AES_128_GCM_SHA256` (TLS 1.3).
+
+## 8. Lỗi của bản v1 đã được sửa
+
+| v1 | Vấn đề | v2 |
+|---|---|---|
+| PKI ML-DSA-44/65 cho mọi dịch vụ | Không thành phần nào trong stack hỗ trợ (mục 2) | ECDSA P-256; ML-DSA chỉ đo ở M5 |
+| "Bảo vệ tuyệt đối trước máy tính lượng tử" | ML-DSA chỉ xác thực; mối đe dọa harvest-now-decrypt-later nằm ở trao đổi khóa | Không claim PQ; đo hybrid KEM ở M5 |
+| Chữ ký ML-DSA-65 = 3.293 bytes | FIPS 204: **3.309 bytes** (3.293 là Dilithium3 bản round 3) | Dùng số FIPS 204 trong M5 |
+| InfinityFree + `dns_infinityfree` | InfinityFree không cho trỏ bản ghi về IP lab; `acme.sh` không có plugin này | Hoãn; nếu làm thì dùng DuckDNS |
+| Ingress ↔ MinIO trực tiếp | Phá phân vùng: MinIO thuộc Z2, chỉ Gateway Z1 được gọi tới | Chỉ Gateway gọi MinIO |
+| `*.medshare.local` làm DNS | `.local` dành cho mDNS | `*.medshare.internal` |
+| `pqc-cert-manager` đọc Docker socket | Tương đương quyền root trên host | Script tĩnh; SPIRE/step-ca nếu cần tự động |
+| Cert không có KU/EKU/basicConstraints, Root ký trực tiếp leaf, hạn 90 ngày | PKI yếu | Root offline + Intermediate, đủ extensions, hạn 7 ngày |
+| Envoy `match_typed_subject_alt_names` thiếu `san_type: URI` | Không khớp được SPIFFE ID | Bỏ Envoy; kiểm tra SPIFFE ID bằng code |
+| TC-PQC-01: `ECDHE-ECDSA-AES256-GCM-SHA384` | Đây là cipher suite TLS 1.2 | Cipher suite TLS 1.3 (mục 7) |
+| TC-PQC-04: "HTTP 403" khi thiếu cert | Handshake thất bại thì không có HTTP; TLS 1.3 trả alert 116 | TC-20.a |
+| Không có test đúng CA nhưng sai SPIFFE ID | Đây là test cốt lõi của SPIFFE | TC-20.c |
+| "he-worker" là dịch vụ mạng | HE worker là CLI | Ngoài phạm vi |
+| Mâu thuẫn M-12 ("không tự có PQ TLS") | Thiếu ADR | ADR-0004 (proposed) |
